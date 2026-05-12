@@ -1,0 +1,259 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Softimite Language="简体中文">
+  <Form>
+    <!--通用信息-->
+    <Name>CurrencyInfo</Name>
+    <Controls>
+        <Control name="Prompt" text="提示" />
+        <Control name="Error" text="错误" />
+        <Control name="Exception" text="异常" />
+		<Control name="Color" text="颜色" />
+		<Control name="Save" text="保存" />
+		<Control name="Close" text="关闭" />
+        <Control name="Determine" text="确定要关闭？" />
+        <Control name="System_Name" text="点云成像上位机V1.0.2" />
+    </Controls>
+  </Form>
+
+  <Form>
+    <!--错误信息-->
+    <Name>ErrorInfo</Name>
+    <Controls>
+        <Control name="ProcessIsRuning" text="点云成像上位机已运行" />
+        <Control name="ErrorSavePath" text="请先设置正确的保存路径。" />
+        <Control name="NotConnect" text="请先连接雷达。" />
+        <Control name="ConnectError" text="请先断开连接。" />
+        <Control name="SaveSuccess" text="保存成功。" />
+		<Control name="DataEmpty" text="请检查是否有数据为空。" />
+		<Control name="SaveDataEx" text="保存数据异常。" />
+		<Control name="Alived" text="已激活" />
+		<Control name="Unalive" text="未激活" />
+        <Control name="NotGetAliveStatus" text="未获取到激活状态" />
+        <Control name="AliveKeyError" text="密钥输入格式不正确或长度不够" />
+        <Control name="AliveSuccessed" text="激活成功" />
+        <Control name="AliveFailed" text="激活失败" />
+        <Control name="SelectFilePath" text="请选择文件路径" />
+        <Control name="HeightColorEmpty" text="高度颜色数据为空。" />
+		<Control name="HeightColorError" text="高度颜色数据必须从下到上值越大" />
+		<Control name="FileError" text="文件有误" />
+		<Control name="EnterUpgrade" text="进入雷达升级模式" />
+		<Control name="EarsingFile" text="正在擦除雷达数据，请稍候" />
+		<Control name="EarseFileFailed" text="擦除雷达数据失败" />
+		<Control name="SendFileFailed" text="发送数据失败" />
+		<Control name="SendingFile" text="正在发送数据" />
+        <Control name="Upgrading" text="正在升级" />
+        <Control name="UpgradeSuccessed" text="雷达升级成功" />
+        <Control name="UpgradeFailed" text="雷达升级失败" />
+        <Control name="NoReplayFile" text="此目录下没有可回放文件" />
+        <Control name="SelectReplayFolder" text="选择回放目录" />
+        <Control name="Replaying" text="正在回放文件=>" />
+        <Control name="FileReadError" text="文件读取错误" />
+        <Control name="FileReplayError" text="文件回放错误" />
+        <Control name="FileReplayEnd" text="文件回放结束" />
+        <Control name="FileReplayStop" text="文件回放暂停" />
+        <Control name="CancelReplay" text="文件回放已取消" />
+        <Control name="DeviceConnected" text="设备已连接" />
+        <Control name="DeviceConnectFailed" text="设备连接失败" />
+        <Control name="DeviceDisconnected" text="设备断开连接" />
+        <Control name="PointSizeError" text="目标大小必须是大于0的整数" />
+        <Control name="AccFrameError" text="累计帧数必须是大于0的整数" />
+        <Control name="AccFrameTypeError" text="请选择累计帧数方式" />
+        <Control name="ConnParamsError" text="通讯参数错误" />
+        <Control name="StepError" text="步长不能小于3" />
+        <Control name="DataFormatError" text="请选择回放数据格式" />
+        <Control name="FrameCycleError" text="帧周期必须大于20ms" />
+		<Control name="TrackSizeError" text="跟踪目标大小必须大于0" />
+		<Control name="ShowTypeError" text="请选择显示方案" />
+		<Control name="ShowTrackTrajectoryError" text="请选择轨迹是否显示" />
+		<Control name="UpgradeFileError" text="升级文件错误" />
+		<Control name="NoSupportConnType" text="不支持对应通讯方式" />
+		<Control name="UpgradePreparation" text="升级准备" />
+		<Control name="UpgradePreparationFailed" text="升级准备失败" />
+		<Control name="DataTransport" text="数据传输" />
+		<Control name="DataTransportFailed" text="数据传输失败" />
+		<Control name="CheckFailedResend" text="数据传输失败重传" />
+		<Control name="DataTransportFinish" text="数据传输完成，等待雷达升级（40s内）...." />
+		<Control name="UpgradeTip" text="注:部分雷达(如UCM211)升级完成后需等待雷达重启30s" />
+    </Controls>
+  </Form>
+  <Form>
+	<!--连接配置-->
+	<Name>ConnectSettingForm</Name>
+	<Controls>
+		<Control name="RadarType" text="雷达型号" />
+		<Control name="ConnType" text="通讯类型" />
+		<Control name="DeviceName" text="设备名称" />
+		<Control name="DeviceIndex" text="设备索引" />
+		<Control name="ChannelIndex" text="通道号" />
+		<Control name="ConnectParams" text="通讯参数" />
+		<Control name="ABitBaud" text="仲裁域波特率" />
+		<Control name="DBitBaud" text="数据域波特率" />
+		<Control name="CANFDStandard" text="CANFD标准" />
+		<Control name="CANBaud" text="波特率" />
+		<Control name="DeviceAddress" text="设备地址" />
+		<Control name="DevicePort" text="设备端口" />
+		<Control name="SerialNum" text="串口号" />
+		<Control name="SeriaParity" text="校验位" />
+		<Control name="DataBit" text="数据位" />
+		<Control name="StopBit" text="停止位" />
+	</Controls>
+  </Form>
+  <Form>
+	<!--图表配置-->
+	<Name>SystemSetForm</Name>
+	<Controls>
+		<Control name="lb_GraphTitle" text="图表参数" />
+		<Control name="XMin" text="X轴最小值" />
+		<Control name="XMax" text="X轴最大值" />
+		<Control name="XStep" text="X轴步长" />
+		<Control name="YMin" text="Y轴最小值" />
+		<Control name="YMax" text="Y轴最大值" />
+		<Control name="YStep" text="Y轴步长" />
+		<Control name="ZMin" text="Z轴最小值" />
+		<Control name="ZMax" text="Z轴最大值" />
+		<Control name="PointSize" text="点云大小" />
+		<Control name="TrackSize" text="跟踪大小" />
+		<Control name="CumulativeFramesText" text="累计帧数" />
+		<Control name="CumulativeTypeText" text="累计方式" />
+		<Control name="CumulativeClear" text="累计后清除" />
+		<Control name="CumulativeKeep" text="累计后保留" />
+		<Control name="ShowType" text="显示方案" />
+		<Control name="ShowType_PointAndTrack" text="点云&amp;跟踪" />
+		<Control name="ShowType_Point" text="点云" />
+		<Control name="ShowType_Track" text="跟踪" />
+		<Control name="TrackColor" text="跟踪颜色" />
+		<Control name="TrackTextColor" text="跟踪文本颜色" />
+		<Control name="TrackTextSize" text="跟踪文本大小" />
+		<Control name="TrackTrajectory" text="跟踪轨迹" />
+		<Control name="Item_Show" text="显示" />
+		<Control name="Item_Hide" text="隐藏" />
+		<Control name="TrackTrajectoryWidth" text="跟踪轨迹线宽" />
+		<Control name="TrackTrajectoryColor" text="跟踪轨迹颜色" />
+		<Control name="TrackTrajectoryNum" text="单条轨迹点数" />
+		<Control name="TrajectoryOuttime" text="轨迹超时(ms)" />
+		<Control name="TrackColorMode" text="跟踪颜色模式" />
+		<Control name="Default" text="默认" />
+		<Control name="DivByID" text="ID配色" />
+
+		<Control name="lb_SaveDataParams" text="数据存储参数" />
+		<Control name="cb_TargetSave" text="储存使能" />
+		<Control name="lb_FileSize" text="文件大小" />
+		<Control name="lb_FileSizeUnit" text="M" />
+
+		<Control name="lb_ColorTitle" text="目标颜色参数" />
+		<Control name="rb_DefaultColor" text="默认" />
+		<Control name="rb_HeightColor" text="高度" />
+		<Control name="Red" text="红" />
+		<Control name="Orange" text="橙" />
+		<Control name="Yellow" text="黄" />
+		<Control name="Green" text="绿" />
+		<Control name="Cyan" text="青" />
+		<Control name="Blue" text="蓝" />
+		<Control name="Purple" text="紫" />
+
+		<Control name="lb_DataReplayParams" text="数据回放参数" />
+		<Control name="DataFormat" text="数据格式" />
+		<Control name="FrameCycle" text="帧周期" />
+
+		<Control name="lb_TextParams" text="跟踪文本参数" />
+		<Control name="cb_DisplayTrackText" text="跟踪文本显示" />
+		<Control name="cb_ID" text="目标编号(ID)" />
+		<Control name="cb_X" text="横向距离(X)" />
+		<Control name="cb_Y" text="纵向距离(Y)" />
+		<Control name="cb_Z" text="目标高度(Z)" />
+		<Control name="cb_V" text="目标速度(V)" />
+		<Control name="cb_A" text="目标角度(A)" />
+		<Control name="cb_C" text="置信度(C)" />
+	</Controls>
+  </Form>
+
+  <Form>
+    <!--主界面-->
+    <Name>MainForm</Name>
+    <Controls>
+        <Control name="ts_Start" text="启动扫描" />
+        <Control name="ts_Stop" text="停止扫描" />
+		<Control name="ts_System" text="系统设置" />
+        <Control name="ts_Connect" text="连接配置" />
+        <Control name="ts_TarInfoShow" text="目标文本" />
+        <Control name="ts_Graph" text="图表配置" />
+        <Control name="btn_SystemSet" text="系统参数" />
+        <Control name="ts_Color" text="目标颜色" />
+        <Control name="ts_SaveData" text="存储配置" />
+        <Control name="ts_RadarFunc" text="雷达功能" />
+        <Control name="ts_RadarAlive" text="雷达激活" />
+        <Control name="ts_RadarUpgrade" text="雷达升级" />
+        <Control name="btn_ResetCamera" text="重置视角" />
+        <Control name="lb_DataReplayStart" text="数据回放" />
+        <Control name="lb_DataReplayAbort" text="中止回放" />
+        <Control name="lb_DataReplayStop" text="暂停回放" />
+        <Control name="lb_DataReplayResume" text="恢复回放" />
+        <Control name="lb_ConnType" text="连接类型：" />
+        <Control name="lb_Device" text="连接设备：" />
+		<Control name="RadarInfoArea" text="雷达信息区" />
+		<Control name="VersionText" text="软件版本号" />
+		<Control name="TarNumText" text="周期点云数" />
+		<Control name="ShowTarNumText" text="累积点云数" />
+		<Control name="TrackNumText" text="周期跟踪数" />
+		<Control name="FrameNumText" text="雷达帧率" />
+		<Control name="ControlAreaTitle" text="控制功能区" />
+		<Control name="SystemInfoArea" text="系统消息区" />
+		<Control name="VideoPreview" text="视频预览" />
+		<Control name="XY2DView" text="XY俯视图预览" />
+    </Controls>
+  </Form>
+
+  <Form>
+    <!--升级界面-->
+    <Name>UpgradeForm</Name>
+    <Controls>
+      <Control name="btn_Upgrade" text="雷达升级" />
+      <Control name="btn_Version" text="获取版本" />
+      <Control name="btn_File" text="固件文件" />
+    </Controls>
+  </Form>
+
+  <Form>
+    <!--激活界面-->
+    <Name>RadarAliveForm</Name>
+    <Controls>
+      <Control name="AliveStatus" text="激活状态" />
+      <Control name="GetHardwareID" text="获取硬件ID" />
+      <Control name="WriteKey" text="写入密钥" />
+      <Control name="AliveResult" text="激活结果" />
+    </Controls>
+  </Form>
+	
+  <Form>
+    <!--视频预览界面-->
+    <Name>VideoPreviewForm</Name>
+    <Controls>
+		<Control name="GetingDevices" text="获取设备中..." />
+		<Control name="RtspStream" text="RTSP流" />
+		<Control name="NoSelectDevice" text="没有选择设备" />
+		<Control name="InputRTSPAddress" text="请检查RTSP流地址" />
+		<Control name="Starting" text="正在启动" />
+		<Control name="StartFailed" text="启动失败" />
+		<Control name="NoConnected" text="未连接" />
+		<Control name="Offline" text="离线" />
+		<Control name="Running" text="运行中" />
+		<Control name="Disconnected" text="已断开" />
+		<Control name="Resolution" text="分辨率" />
+		<Control name="Idle" text="空闲" />
+		<Control name="Connecting" text="连接中" />
+		<Control name="Buffering" text="缓冲中" />
+		<Control name="Playing" text="播放中" />
+		<Control name="PlayError" text="播放错误" />
+		<Control name="RtspAddress" text="rtsp地址" />
+		<Control name="ControlBox" text="控制面板" />
+		<Control name="DevicesList" text="设备列表" />
+		<Control name="StartPreview" text="启动预览" />
+		<Control name="StopPreview" text="停止预览" />
+		<Control name="DevicesInfo" text="设备信息" />
+		<Control name="USBVideoError" text="请检查USB摄像头是否正常" />
+		<Control name="RTSPVideoError" text="请检查RTSP流是否正常" />
+    </Controls>
+  </Form>
+	
+
+</Softimite>

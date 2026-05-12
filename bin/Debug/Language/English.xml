@@ -1,0 +1,257 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Softimite Language="English">
+  <Form>
+    <!--登录界面-->
+    <Name>CurrencyInfo</Name>
+    <Controls>
+		<Control name="Prompt" text="System Prompt" />
+		<Control name="Error" text="Error" />
+		<Control name="Exception" text="Exception" />
+		<Control name="Color" text="Color" />
+		<Control name="Save" text="Save" />
+		<Control name="Close" text="Close" />
+		<Control name="Determine" text="Whether or not to Quit" />
+		<Control name="System_Name" text="Point Cloud V1.0.2" />
+    </Controls>
+  </Form>
+
+	<Form>
+		<!--错误信息-->
+		<Name>ErrorInfo</Name>
+		<Controls>
+			<Control name="ProcessIsRuning" text="Point Cloud is Running" />
+			<Control name="ErrorSavePath" text="Please set corrent save path." />
+			<Control name="NotConnect" text="Please connect radar." />
+			<Control name="ConnectError" text="Please stop radar." />
+			<Control name="SaveSuccess" text="Save successed." />
+			<Control name="DataEmpty" text="Exist data empty." />
+			<Control name="SaveDataEx" text="Save data except." />
+			<Control name="Alived" text="Alived" />
+			<Control name="Unalive" text="Unalive" />
+			<Control name="NotGetAliveStatus" text="No get alive status" />
+			<Control name="AliveKeyError" text="Alive key or leng is error" />
+			<Control name="AliveSuccessed" text="Alive successed" />
+			<Control name="AliveFailed" text="Alive failed" />
+			<Control name="SelectFilePath" text="Select file path" />
+			<Control name="HeightColorEmpty" text="Height color is empty" />
+			<Control name="HeightColorError" text="Input values must go from small to large from bottom to top" />
+			<Control name="FileError" text="File error" />
+			<Control name="EnterUpgrade" text="Enter the radar upgrade mode" />
+			<Control name="EarsingFile" text="Radar data is erasing，Please wait a moment" />
+			<Control name="EarseFileFailed" text="Erase radar data failure" />
+			<Control name="SendFileFailed" text="Send radar data failure" />
+			<Control name="SendingFile" text="Radar data is sending" />
+			<Control name="Upgrading" text="Upgrading" />
+			<Control name="UpgradeSuccessed" text="Upgrade Successed" />
+			<Control name="UpgradeFailed" text="Upgrade Failed" />
+			<Control name="NoReplayFile" text="Not replay file in this folder" />
+			<Control name="SelectReplayFolder" text="Select replay folder" />
+			<Control name="Replaying" text="Replaying file=>" />
+			<Control name="FileReadError" text="File read error" />
+			<Control name="FileReplayError" text="File replay error" />
+			<Control name="FileReplayEnd" text="File replay end" />
+			<Control name="FileReplayStop" text="File replay stop" />
+			<Control name="CancelReplay" text="File replay cancel" />
+			<Control name="DeviceConnected" text="Device connected" />
+			<Control name="DeviceConnectFailed" text="Device connect failed" />
+			<Control name="DeviceDisconnected" text="Device Disconnected" />
+			<Control name="PointSizeError" text="Target size must be a positive integer" />
+			<Control name="AccFrameError" text="Acc frame must be a positive integer" />
+			<Control name="AccFrameTypeError" text="Please choose the mothod for acc frame" />
+			<Control name="ConnParamsError" text="Communicate params is error" />
+			<Control name="StepError" text="Step can not less than 3" />
+			<Control name="DataFormatError" text="Please choose the format for data" />
+			<Control name="FrameCycleError" text="Frame cycle must more than 20ms" />
+			<Control name="TrackSizeError" text="Track size must be more than zero." />
+			<Control name="ShowTypeError" text="Please choose the show type." />
+			<Control name="ShowTrackTrajectoryError" text="Please choose whether to show the trajectory." />
+			<Control name="UpgradeFileError" text="Upgrade file error." />
+			<Control name="NoSupportConnType" text="Not support connType." />
+			<Control name="UpgradePreparation" text="Upgrade preparation." />
+			<Control name="UpgradePreparationFailed" text="Upgrade preparation failed." />
+			<Control name="DataTransport" text="Data transport" />
+			<Control name="DataTransportFailed" text="Data transport failed" />
+			<Control name="CheckFailedResend" text="Data transport failed resend" />
+			<Control name="DataTransportFinish" text="Data transport finish，wait update finish（less than 40s）...." />
+			<Control name="UpgradeTip" text="Some radars waiting 30 seconds for radar restart after upgrade" />
+		</Controls>
+	</Form>
+	<Form>
+		<!--连接配置-->
+		<Name>ConnectSettingForm</Name>
+		<Controls>
+			<Control name="RadarType" text="Radar Type" />
+			<Control name="ConnType" text="Conn Type" />
+			<Control name="DeviceName" text="Name" />
+			<Control name="DeviceIndex" text="Index" />
+			<Control name="ChannelIndex" text="Channel" />
+			<Control name="ConnectParams" text="Connect Params" />
+			<Control name="ABitBaud" text="ABitBaud" />
+			<Control name="DBitBaud" text="DBitBaud" />
+			<Control name="CANFDStandard" text="Standard" />
+			<Control name="CANBaud" text="Baud" />
+			<Control name="DeviceAddress" text="Device Address" />
+			<Control name="DevicePort" text="Device Port" />
+			<Control name="SerialNum" text="Serial" />
+			<Control name="SeriaParity" text="Parity" />
+			<Control name="DataBit" text="DataBit" />
+			<Control name="StopBit" text="StopBit" />
+		</Controls>
+	</Form>
+	<Form>
+		<!--图表配置-->
+		<Name>SystemSetForm</Name>
+		<Controls>
+			<Control name="lb_GraphTitle" text="Graph Params" />
+			<Control name="XMin" text="XMin" />
+			<Control name="XMax" text="XMax" />
+			<Control name="XStep" text="XStep" />
+			<Control name="YMin" text="YMin" />
+			<Control name="YMax" text="YMax" />
+			<Control name="YStep" text="YStep" />
+			<Control name="ZMin" text="ZMin" />
+			<Control name="ZMax" text="ZMax" />
+			<Control name="PointSize" text="PointSize" />
+			<Control name="TrackSize" text="TrackSize" />
+			<Control name="CumulativeFramesText" text="Acc Num" />
+			<Control name="CumulativeTypeText" text="Acc Type" />
+			<Control name="CumulativeClear" text="Acc Clear" />
+			<Control name="CumulativeKeep" text="Acc Keep" />
+			<Control name="ShowType" text="ShowType" />
+			<Control name="ShowType_PointAndTrack" text="Point &amp; Track" />
+			<Control name="ShowType_Point" text="Point" />
+			<Control name="ShowType_Track" text="Track" />
+			<Control name="TrackColor" text="Track Color" />
+			<Control name="TrackTextColor" text="Text Color" />
+			<Control name="TrackTextSize" text="Text Size" />
+			<Control name="TrackTrajectory" text="Trajectory" />
+			<Control name="Item_Show" text="Show" />
+			<Control name="Item_Hide" text="Hide" />
+			<Control name="TrackTrajectoryWidth" text="Line Width" />
+			<Control name="TrackTrajectoryColor" text="Line Color" />
+			<Control name="TrackTrajectoryNum" text="Line Point Num" />
+			<Control name="TrajectoryOuttime" text="Outtime(ms)" />
+			<Control name="TrackColorMode" text="Track Color Mode" />
+			<Control name="Default" text="Defalut" />
+			<Control name="DivByID" text="Div By ID" />
+
+			<Control name="lb_SaveDataParams" text="Save Data Params" />
+			<Control name="cb_TargetSave" text="Save Enable" />
+			<Control name="lb_FileSize" text="File Size" />
+			<Control name="lb_FileSizeUnit" text="M" />
+
+			<Control name="lb_ColorTitle" text="Color Params" />
+			<Control name="rb_DefaultColor" text="Default" />
+			<Control name="rb_HeightColor" text="Height" />
+			<Control name="Red" text="Red" />
+			<Control name="Orange" text="Orange" />
+			<Control name="Yellow" text="Yellow" />
+			<Control name="Green" text="Green" />
+			<Control name="Cyan" text="Cyan" />
+			<Control name="Blue" text="Blue" />
+			<Control name="Purple" text="Purple" />
+
+			<Control name="lb_DataReplayParams" text="Data Replay Params" />
+			<Control name="DataFormat" text="Data Format" />
+			<Control name="FrameCycle" text="Frame Cycle" />
+
+			<Control name="lb_TextParams" text="Track Text Params" />
+			<Control name="cb_DisplayTrackText" text="Track Text Show" />
+			<Control name="cb_ID" text="ID" />
+			<Control name="cb_X" text="X" />
+			<Control name="cb_Y" text="Y" />
+			<Control name="cb_Z" text="Z" />
+			<Control name="cb_V" text="Velocity" />
+			<Control name="cb_A" text="Angle" />
+			<Control name="cb_C" text="Confidence" />
+		</Controls>
+	</Form>
+	<Form>
+		<!--主界面-->
+		<Name>MainForm</Name>
+		<Controls>
+			<Control name="ts_Start" text="Start" />
+			<Control name="ts_Stop" text="Stop" />
+			<Control name="ts_System" text="System Set" />
+			<Control name="ts_Connect" text="Connect Set" />
+			<Control name="ts_TarInfoShow" text="Target Text" />
+			<Control name="ts_Graph" text="Graph Set" />
+			<Control name="btn_SystemSet" text="System Set" />
+			<Control name="ts_Color" text="Target Color" />
+			<Control name="ts_SaveData" text="Save Set" />
+			<Control name="ts_RadarFunc" text="Radar" />
+			<Control name="ts_RadarAlive" text="Radar Alive" />
+			<Control name="ts_RadarUpgrade" text="Radar Upgrade" />
+			<Control name="btn_ResetCamera" text="Reset View" />
+			<Control name="lb_DataReplayStart" text="Data Replay" />
+			<Control name="lb_DataReplayAbort" text="Abort Replay" />
+			<Control name="lb_DataReplayStop" text="Stop Replay" />
+			<Control name="lb_DataReplayResume" text="Resume Replay" />
+			<Control name="lb_ConnType" text="Conn Type:" />
+			<Control name="lb_Device" text="Device:" />
+			<Control name="RadarInfoArea" text="Radar Info Area" />
+			<Control name="VersionText" text="Software Version" />
+			<Control name="TarNumText" text="Target Num" />
+			<Control name="ShowTarNumText" text="Acc Target Num" />
+			<Control name="TrackNumText" text="Track Num" />
+			<Control name="FrameNumText" text="Radar Frame" />
+			<Control name="ControlAreaTitle" text="Control Function Area" />
+			<Control name="SystemInfoArea" text="System Info Area" />
+			<Control name="VideoPreview" text="Video Preview" />
+			<Control name="XY2DView" text="XYView" />
+		</Controls>
+	</Form>
+
+	<Form>
+		<!--升级界面-->
+		<Name>UpgradeForm</Name>
+		<Controls>
+			<Control name="btn_Upgrade" text="Upgrade" />
+			<Control name="btn_Version" text="Version" />
+			<Control name="btn_File" text="File" />
+		</Controls>
+	</Form>
+
+	<Form>
+		<!--激活界面-->
+		<Name>RadarAliveForm</Name>
+		<Controls>
+			<Control name="AliveStatus" text="Status" />
+			<Control name="GetHardwareID" text="Hardware ID" />
+			<Control name="WriteKey" text="Write Key" />
+			<Control name="AliveResult" text="Result" />
+		</Controls>
+	</Form>
+
+	<Form>
+		<!--视频预览界面-->
+		<Name>VideoPreviewForm</Name>
+		<Controls>
+			<Control name="GetingDevices" text="Devices searching..." />
+			<Control name="RtspStream" text="RTSP stream" />
+			<Control name="NoSelectDevice" text="No device selected" />
+			<Control name="InputRTSPAddress" text="Please check rtsp stream address" />
+			<Control name="Starting" text="Starting" />
+			<Control name="StartFailed" text="Start failed" />
+			<Control name="NoConnected" text="Unconnected" />
+			<Control name="Offline" text="Offline" />
+			<Control name="Running" text="Running" />
+			<Control name="Disconnected" text="Disconnected" />
+			<Control name="Resolution" text="Res" />
+			<Control name="Idle" text="Idle" />
+			<Control name="Connecting" text="Connecting" />
+			<Control name="Buffering" text="Buffering" />
+			<Control name="Playing" text="Playing" />
+			<Control name="PlayError" text="Play error" />
+			<Control name="RtspAddress" text="rtsp address" />
+			<Control name="ControlBox" text="Control Box" />
+			<Control name="DevicesList" text="Devices List" />
+			<Control name="StartPreview" text="Start Preview" />
+			<Control name="StopPreview" text="Stop Preview" />
+			<Control name="DevicesInfo" text="Device Info" />
+			<Control name="USBVideoError" text="Check usb camera status in Device Manager" />
+			<Control name="RTSPVideoError" text="Verify rtsp address validity" />
+		</Controls>
+	</Form>
+
+</Softimite>

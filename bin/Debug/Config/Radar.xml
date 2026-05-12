@@ -1,0 +1,14 @@
+<Project id="1" name="Project">
+  <radar>
+	  <!--id不允许改且不允许重复-->>
+    <RadarType id="0" name="SR75">
+      <communication>CAN,TCP</communication>
+    </RadarType>
+	  <RadarType id="0" name="SR75(AFS721)">
+		  <communication>COM,TCP</communication>
+	  </RadarType>
+    <RadarType id="1" name="UCM211">
+      <communication>CAN,COM,TCP</communication>
+    </RadarType>
+  </radar>
+</Project>

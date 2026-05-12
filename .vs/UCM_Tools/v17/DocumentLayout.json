@@ -1,0 +1,85 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|e:\\projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\ucm_tools\\ucm_tools\\can_conn\\can_function.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|solutionrelative:can_conn\\can_function.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|e:\\projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\ucm_tools\\ucm_tools\\forms\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|solutionrelative:forms\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\forms\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|solutionrelative:forms\\mainform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\config\\params.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}",
+      "RelativeMoniker": "D:0:0:{06150177-2D82-4619-86D3-51DD45FD147B}|UCM_Tools.csproj|solutionrelative:config\\params.config||{FA3CD31E-987B-443A-9B81-186104E8DAC1}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "CAN_Function.cs",
+              "DocumentMoniker": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\CAN_Conn\\CAN_Function.cs",
+              "RelativeDocumentMoniker": "CAN_Conn\\CAN_Function.cs",
+              "ToolTip": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\CAN_Conn\\CAN_Function.cs",
+              "RelativeToolTip": "CAN_Conn\\CAN_Function.cs",
+              "ViewState": "AgIAAEMCAAAAAAAAAAAAAEsCAACsAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-14T09:34:16.673Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "MainForm.cs",
+              "DocumentMoniker": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\Forms\\MainForm.cs",
+              "RelativeDocumentMoniker": "Forms\\MainForm.cs",
+              "ToolTip": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\Forms\\MainForm.cs",
+              "RelativeToolTip": "Forms\\MainForm.cs",
+              "ViewState": "AgIAAF8AAAAAAAAAAAAuwHQAAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-08T06:03:53.685Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Params.config",
+              "DocumentMoniker": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\Config\\Params.config",
+              "RelativeDocumentMoniker": "Config\\Params.config",
+              "ToolTip": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\Config\\Params.config",
+              "RelativeToolTip": "Config\\Params.config",
+              "ViewState": "AgIAAFUAAAAAAAAAAAAAAGYAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000601|",
+              "WhenOpened": "2026-04-08T06:01:46.162Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "MainForm.cs [\u8BBE\u8BA1]",
+              "DocumentMoniker": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\Forms\\MainForm.cs",
+              "RelativeDocumentMoniker": "Forms\\MainForm.cs",
+              "ToolTip": "E:\\Projects\\uppermachine\\\u65E0\u4EBA\u673A\u9879\u76EE\\UCM_Tools\\UCM_Tools\\Forms\\MainForm.cs [\u8BBE\u8BA1]",
+              "RelativeToolTip": "Forms\\MainForm.cs [\u8BBE\u8BA1]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-04-08T06:01:18.966Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

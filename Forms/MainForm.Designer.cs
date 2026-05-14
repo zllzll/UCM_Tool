@@ -4131,21 +4131,21 @@ namespace UCM_Tools.Forms
             this.ts_RadarFunction});
             this.uiContextMenuStrip1.Name = "uiContextMenuStrip1";
             this.uiContextMenuStrip1.ShowImageMargin = false;
-            this.uiContextMenuStrip1.Size = new System.Drawing.Size(156, 114);
+            this.uiContextMenuStrip1.Size = new System.Drawing.Size(135, 92);
             this.uiContextMenuStrip1.Style = Sunny.UI.UIStyle.Custom;
             // 
             // ts_Theme
             // 
             this.ts_Theme.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_Theme.Name = "ts_Theme";
-            this.ts_Theme.Size = new System.Drawing.Size(155, 22);
+            this.ts_Theme.Size = new System.Drawing.Size(134, 22);
             this.ts_Theme.Text = "主题";
             // 
             // menuItem_VideoPreview
             // 
             this.menuItem_VideoPreview.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.menuItem_VideoPreview.Name = "menuItem_VideoPreview";
-            this.menuItem_VideoPreview.Size = new System.Drawing.Size(155, 22);
+            this.menuItem_VideoPreview.Size = new System.Drawing.Size(134, 22);
             this.menuItem_VideoPreview.Text = "视频预览";
             this.menuItem_VideoPreview.Click += new System.EventHandler(this.menuItem_VideoPreview_Click);
             // 
@@ -4153,7 +4153,7 @@ namespace UCM_Tools.Forms
             // 
             this.ts_TrackData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_TrackData.Name = "ts_TrackData";
-            this.ts_TrackData.Size = new System.Drawing.Size(155, 22);
+            this.ts_TrackData.Size = new System.Drawing.Size(134, 22);
             this.ts_TrackData.Text = "俯视图(XY平面)";
             this.ts_TrackData.Click += new System.EventHandler(this.ts_TrackData_Click);
             // 
@@ -4165,7 +4165,7 @@ namespace UCM_Tools.Forms
             this.ts_RadarUpgrade_UCM211});
             this.ts_RadarFunction.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_RadarFunction.Name = "ts_RadarFunction";
-            this.ts_RadarFunction.Size = new System.Drawing.Size(155, 22);
+            this.ts_RadarFunction.Size = new System.Drawing.Size(134, 22);
             this.ts_RadarFunction.Text = "雷达功能";
             // 
             // ts_RadarAlive_SR75
@@ -4173,7 +4173,7 @@ namespace UCM_Tools.Forms
             this.ts_RadarAlive_SR75.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
             this.ts_RadarAlive_SR75.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_RadarAlive_SR75.Name = "ts_RadarAlive_SR75";
-            this.ts_RadarAlive_SR75.Size = new System.Drawing.Size(180, 22);
+            this.ts_RadarAlive_SR75.Size = new System.Drawing.Size(177, 22);
             this.ts_RadarAlive_SR75.Text = "雷达激活(SR75)";
             this.ts_RadarAlive_SR75.Click += new System.EventHandler(this.btn_RadarAlive_Click);
             // 
@@ -4182,7 +4182,7 @@ namespace UCM_Tools.Forms
             this.ts_RadarUpgrade_SR75.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
             this.ts_RadarUpgrade_SR75.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_RadarUpgrade_SR75.Name = "ts_RadarUpgrade_SR75";
-            this.ts_RadarUpgrade_SR75.Size = new System.Drawing.Size(180, 22);
+            this.ts_RadarUpgrade_SR75.Size = new System.Drawing.Size(177, 22);
             this.ts_RadarUpgrade_SR75.Text = "雷达升级(SR75)";
             this.ts_RadarUpgrade_SR75.Click += new System.EventHandler(this.btn_RadarUpgrade_Click);
             // 
@@ -4191,7 +4191,7 @@ namespace UCM_Tools.Forms
             this.ts_RadarUpgrade_UCM211.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
             this.ts_RadarUpgrade_UCM211.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_RadarUpgrade_UCM211.Name = "ts_RadarUpgrade_UCM211";
-            this.ts_RadarUpgrade_UCM211.Size = new System.Drawing.Size(180, 22);
+            this.ts_RadarUpgrade_UCM211.Size = new System.Drawing.Size(177, 22);
             this.ts_RadarUpgrade_UCM211.Text = "雷达升级(UCM211)";
             this.ts_RadarUpgrade_UCM211.Click += new System.EventHandler(this.ts_RadarUpgrade_UCM211_Click);
             // 

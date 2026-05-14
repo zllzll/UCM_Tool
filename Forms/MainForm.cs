@@ -43,6 +43,7 @@ namespace UCM_Tools.Forms
         string periodstring = "*******************  xyz_data **************************";
         string periodstringPointTrack = "*******************  point_track_data **************************";
         string saveDataClusterAlogHead = "frame_id,range,azimuth,elevation,velocity,snr,v_ego_x,v_ego_y,v_ego_z";
+        string saveDataImuAndGpsHead = "time,AccX1,AccY1,AccZ1,AVX1,AVY1,AVZ1,AccX2,AccY2,AccZ2,AVX2,AVY2,AVZ2,GpsLong,GpsLat,GpsHeight,GpsSpeed,GpsDecl";
         #region 全局变量
 
         #region 画图控件
@@ -56,6 +57,7 @@ namespace UCM_Tools.Forms
         public vtkActor axisactor = new vtkActor();
 
         private List<vtkFollower> followers = new List<vtkFollower>();
+        private double _axisRefDistance = -1; // -1=未校准，AxisTextFixedSize首次启用时自动计算
 
         vtkTransform transform = vtkTransform.New();//矩阵变换
 
@@ -117,7 +119,7 @@ namespace UCM_Tools.Forms
         QueueSaveData saveDataTrack = null;
         QueueSaveData saveDataPointTrack = null;
         QueueSaveData saveDataClusterAlog = null;
-
+        QueueSaveData saveDataImuAndGps = null;
         /// <summary>
         /// 累计多少帧显示
         /// </summary>
@@ -384,6 +386,61 @@ namespace UCM_Tools.Forms
             }
         }
 
+        /// <summary>
+        /// 更新坐标轴刻度文字缩放，使其远近大小一致
+        /// </summary>
+        private void UpdateAxisLabelScale()
+        {
+            if (!Config.SystemSetting.AxisTextFixedSize || followers == null || followers.Count == 0 || firstRenderer == null)
+                return;
+
+            double[] camPos = firstRenderer.GetActiveCamera().GetPosition();
+
+            // 首次启用时自动校准参考距离，使当前文字大小与关闭时一致
+            if (_axisRefDistance < 0)
+            {
+                double totalDist = 0;
+                int count = 0;
+                for (int i = 0; i < followers.Count; i++)
+                {
+                    var f = followers[i];
+                    if (f == null) continue;
+                    double[] p = GetFollowerWorldPos(f);
+                    double d = Dist(p, camPos);
+                    if (d > 0.1) { totalDist += d; count++; }
+                }
+                _axisRefDistance = count > 0 ? totalDist / count : 100.0;
+            }
+
+            for (int i = 0; i < followers.Count; i++)
+            {
+                var follower = followers[i];
+                if (follower == null) continue;
+
+                double[] pos = GetFollowerWorldPos(follower);
+                double distance = Dist(pos, camPos);
+                double scale = Math.Max(distance, 0.5) / _axisRefDistance
+                             * Config.SystemSetting.AxisTextScale;
+                follower.SetScale(scale, scale, scale);
+            }
+        }
+
+        private double[] GetFollowerWorldPos(vtkFollower follower)
+        {
+            double[] pos = follower.GetPosition();
+            if (SystemSetting.NonUniformScale && SystemSetting.GlobalTransform != null)
+                return SystemSetting.GlobalTransform.TransformPoint(pos[0], pos[1], pos[2]);
+            return pos;
+        }
+
+        private static double Dist(double[] a, double[] b)
+        {
+            double dx = a[0] - b[0];
+            double dy = a[1] - b[1];
+            double dz = a[2] - b[2];
+            return Math.Sqrt(dx * dx + dy * dy + dz * dz);
+        }
+
         private void ClearVTKStaticData()
         {
             // 清理静态网格和坐标轴
@@ -408,6 +465,7 @@ namespace UCM_Tools.Forms
                     followers[i].Dispose();
                 }
                 followers.Clear();
+                _axisRefDistance = -1; // 重新校准
             }
 
             // 释放RenderWindow
@@ -451,7 +509,7 @@ namespace UCM_Tools.Forms
                     firstRenderer.SetBackground(1, 1, 1);  // 纯白背景
             }
             // 启用多重采样抗锯齿（关键！）
-            renderWindow.SetMultiSamples(8);  // 4x MSAA，可设为8或更高
+            renderWindow.SetMultiSamples(2);  // 4x MSAA，可设为8或更高
 
             // 启用Alpha位平面（有助于平滑渲染）
             renderWindow.SetAlphaBitPlanes(1);
@@ -492,7 +550,7 @@ namespace UCM_Tools.Forms
             }
 
             // 绘制网格
-            this.gridactor = this.vtkHelper.DrawGridHalf();
+            this.gridactor = this.vtkHelper.DrawGrid();
             firstRenderer.AddActor(this.gridactor);
 
             // 绘制坐标轴
@@ -581,6 +639,9 @@ namespace UCM_Tools.Forms
                 currentCamera.Zoom(1);
 
             firstRenderer.ResetCameraClippingRange();
+            _axisRefDistance = -1; // 相机复位后重新校准
+            UpdateAxisLabelScale();
+            dynamicFollowerText?.RefreshScales();
             renderWindow.Render();
         }
 
@@ -732,6 +793,7 @@ namespace UCM_Tools.Forms
                 radar.versionEvent += Radar_versionEvent;
                 radar.tarAndClusterPointCloud += Radar_tarAndClusterPointCloud;
                 radar.pointCloudSaveEvent += Radar_pointCloudSaveEvent;
+                radar.imuAndGpsSaveEvent += Radar_imuAndGpsSaveEvent;
                 radar.SendCmd(RadarCommand.ReadSoftwareVersion);
                 return true;
             }
@@ -937,7 +999,9 @@ namespace UCM_Tools.Forms
                             Add3DTextBatch(textTargets);
                         }
                     }
-                    // 5. 只渲染一次
+                    // 5. 更新坐标轴文字缩放（远近一致补偿）
+                    UpdateAxisLabelScale();
+                    // 6. 只渲染一次
                     renderWindow.Render();
                 }));
             }
@@ -1183,7 +1247,7 @@ namespace UCM_Tools.Forms
         }
 
         /// <summary>
-        /// 获取/创建2D文本Actor（带距离衰减）
+        /// 获取/创建2D文本Actor（固定字体大小，远近一致）
         /// </summary>
         private vtkTextActor Get2DTextActor(TargetInfo.RadarTargetInfoStruct tar)
         {
@@ -1205,27 +1269,17 @@ namespace UCM_Tools.Forms
             // 设置内容
             actor.SetInput(VTKHelper.GetDetectionText(tar));
 
-            // ✅ 核心：计算屏幕坐标
+            // 计算屏幕坐标
             int[] screenPos = WorldToScreenCoordinates(tar.XAxis, tar.YAxis, tar.ZAxis);
             actor.SetDisplayPosition(screenPos[0], screenPos[1]);
 
-            // ✅ 替代SetScale：根据距离动态调整字体大小
-            double distance = CalculateDistanceToCamera(tar.XAxis, tar.YAxis, tar.ZAxis);
-            double fontSize = Clamp(14.0 / distance * 20, 10, 20); // 10-20号字体
-            actor.GetTextProperty().SetFontSize((int)fontSize);
+            // 固定字体大小，远近一致
+            int fontSize = SystemSetting.Text2DFontSize;
+            if (fontSize <= 0) fontSize = 14;
+            actor.GetTextProperty().SetFontSize(fontSize);
 
-            // 设置背景避免文字重叠（可选）
             // 设置颜色
             textProperty.SetColor(1.0, 1.0, 1.0); // 白色
-
-            // ✅ 替代方案：阴影效果（比背景更兼容）
-            //try
-            //{
-            //    textProperty.SetShadow(1);
-            //    textProperty.SetShadowOffset(2, 2);
-            //    textProperty.SetShadowColor(0, 0, 0); // 黑色阴影
-            //}
-            //catch { /* 低版本VTK可能不支持，忽略错误 */ }
 
             return actor;
         }
@@ -2292,6 +2346,43 @@ namespace UCM_Tools.Forms
         }
         #endregion 算法要求格式保存
 
+        #region 扩展数据保存
+        private void Radar_imuAndGpsSaveEvent(string time, IMUAndGPSData imuAndGpsData)
+        {
+            if (SystemSetting.TargetData)
+            {
+                if (saveDataImuAndGps == null)
+                {
+                    if (PubClass.EnsureFolderPath($"{SystemSetting.FileRoute}//ImuAndGpsFormat"))
+                    {
+                        if ((saveDataImuAndGps = new QueueSaveData($"{SystemSetting.FileRoute}//ImuAndGpsFormat", 0, "csv", SystemSetting.FileSize, "ImuAndGpsFormat")) != null)
+                        {
+                            saveDataImuAndGps.AddQueue($"{saveDataImuAndGpsHead}\r\n");
+                            saveDataImuAndGps.AddQueue(ImuAndGpsToString(time, imuAndGpsData));
+                        }
+                    }
+                }
+                else
+                    saveDataImuAndGps.AddQueue(ImuAndGpsToString(time, imuAndGpsData));
+            }
+            else//以防测试过程中修改了保存设置
+            {
+                saveDataImuAndGps?.Dispose();
+                saveDataImuAndGps = null;
+            }
+        }
+
+        private string ImuAndGpsToString(string time, IMUAndGPSData imuAndGpsData)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (imuAndGpsData != null)
+            {
+                sb.AppendLine($"{time},{imuAndGpsData.AccX1},{imuAndGpsData.AccY1},{imuAndGpsData.AccZ1},{imuAndGpsData.AVX1},{imuAndGpsData.AVY1},{imuAndGpsData.AVZ1},{imuAndGpsData.AccX2},{imuAndGpsData.AccY2},{imuAndGpsData.AccZ2},{imuAndGpsData.AVX2},{imuAndGpsData.AVY2},{imuAndGpsData.AVZ2},{imuAndGpsData.GpsLong},{imuAndGpsData.GpsLat},{imuAndGpsData.GpsHeight},{imuAndGpsData.GpsSpeed},{imuAndGpsData.GpsDeclination}");
+            }
+            return sb.ToString();
+        }
+        #endregion
+
         #endregion 委托事件
 
         private bool Stop()
@@ -2303,6 +2394,8 @@ namespace UCM_Tools.Forms
                     radar.cycleDataEvent -= Radar_cycleDataEvent;
                     radar.versionEvent -= Radar_versionEvent;
                     radar.tarAndClusterPointCloud -= Radar_tarAndClusterPointCloud;
+                    radar.pointCloudSaveEvent -= Radar_pointCloudSaveEvent;
+                    radar.imuAndGpsSaveEvent -= Radar_imuAndGpsSaveEvent;
                     radar.Stop();
                 }
 
@@ -2313,11 +2406,13 @@ namespace UCM_Tools.Forms
                     saveDataTrack?.Dispose();
                     saveDataPointTrack?.Dispose();
                     saveDataClusterAlog?.Dispose();
+                    saveDataImuAndGps?.Dispose();
                 }
                 saveData = null;
                 saveDataTrack = null;
                 saveDataPointTrack = null;
                 saveDataClusterAlog = null;
+                saveDataImuAndGps = null;
                 // 2. 关键：使用Invoke等待所有待处理的渲染完成后再清理
                 this.Invoke(new Action(() =>
                 {

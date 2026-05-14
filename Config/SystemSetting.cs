@@ -275,6 +275,21 @@ namespace UCM_Tools.Config
                 _ZMax = value;
             }
         }
+
+        private static int _ZStep;
+        /// <summary>
+        /// Z轴步长 view3D
+        /// </summary>
+        public static int ZStep
+        {
+            get { return _ZStep; }
+            set
+            {
+                ConfigXML.SetKeyValue("ZStep", value.ToString());
+                _ZStep = value;
+            }
+        }
+
         private static int _CumulativeFrameNum;
         /// <summary>
         /// 累计多少帧显示
@@ -301,6 +316,19 @@ namespace UCM_Tools.Config
             {
                 ConfigXML.SetKeyValue("CumulativeFrameType", value.ToString());
                 _CumulativeFrameType = value;
+            }
+        }
+        private static bool _B_OtherGrid;
+        /// <summary>
+        /// 是否显示XZ和YZ平面网格
+        /// </summary>
+        public static bool B_OtherGrid
+        {
+            get { return _B_OtherGrid; }
+            set
+            {
+                ConfigXML.SetKeyValue("B_OtherGrid", value.ToString());
+                _B_OtherGrid = value;
             }
         }
         private static bool _HardwareAcc;
@@ -1039,9 +1067,61 @@ namespace UCM_Tools.Config
                 _TrackTextColor = value;
             }
         }
-        private static int _TrackTextSize = 25; 
+        private static int _Text2DFontSize = 14;
         /// <summary>
-        /// 跟踪点颜色
+        /// 2D屏幕空间文本的固定字体大小（像素），远近一致
+        /// </summary>
+        public static int Text2DFontSize
+        {
+            get { return _Text2DFontSize; }
+            set
+            {
+                ConfigXML.SetKeyValue("Text2DFontSize", value.ToString());
+                _Text2DFontSize = value;
+            }
+        }
+        private static bool _TrackTextFixedSize = false;
+        /// <summary>
+        /// true=跟踪文本远近大小一致（距离补偿缩放），false=当前行为（距离越远越小）
+        /// </summary>
+        public static bool TrackTextFixedSize
+        {
+            get { return _TrackTextFixedSize; }
+            set
+            {
+                ConfigXML.SetKeyValue("TrackTextFixedSize", value.ToString());
+                _TrackTextFixedSize = value;
+            }
+        }
+        private static bool _AxisTextFixedSize = false;
+        /// <summary>
+        /// true=坐标轴刻度文字远近大小一致，false=当前行为（距离越远越小）
+        /// </summary>
+        public static bool AxisTextFixedSize
+        {
+            get { return _AxisTextFixedSize; }
+            set
+            {
+                ConfigXML.SetKeyValue("AxisTextFixedSize", value.ToString());
+                _AxisTextFixedSize = value;
+            }
+        }
+        private static double _AxisTextScale = 2.0;
+        /// <summary>
+        /// 坐标轴文字缩放倍率（默认2.0）。仅在 AxisTextFixedSize=true 时生效
+        /// </summary>
+        public static double AxisTextScale
+        {
+            get { return _AxisTextScale; }
+            set
+            {
+                ConfigXML.SetKeyValue("AxisTextScale", value.ToString());
+                _AxisTextScale = value;
+            }
+        }
+        private static int _TrackTextSize = 25;
+        /// <summary>
+        /// 跟踪点文本字体大小
         /// </summary>
         public static int TrackTextSize
         {
@@ -1050,6 +1130,19 @@ namespace UCM_Tools.Config
             {
                 ConfigXML.SetKeyValue("TrackTextSize", value.ToString());
                 _TrackTextSize = value;
+            }
+        }
+        private static double _TrackTextScale = 2.0;
+        /// <summary>
+        /// 跟踪文本缩放倍率（默认2.0）。仅在 TrackTextFixedSize=true 时生效
+        /// </summary>
+        public static double TrackTextScale
+        {
+            get { return _TrackTextScale; }
+            set
+            {
+                ConfigXML.SetKeyValue("TrackTextScale", value.ToString());
+                _TrackTextScale = value;
             }
         }
         private static int _TrackColorMode = 0; 
@@ -1220,9 +1313,11 @@ namespace UCM_Tools.Config
                 _YStep = int.Parse(ConfigXML.GetKeyString("YStep", "0"));
                 _ZMin = int.Parse(ConfigXML.GetKeyString("ZMin", "0"));
                 _ZMax = int.Parse(ConfigXML.GetKeyString("ZMax", "0"));
+                _ZStep = int.Parse(ConfigXML.GetKeyString("ZStep", "0"));
                 _CumulativeFrameNum = int.Parse(ConfigXML.GetKeyString("CumulativeFrameNum", "1"));
                 _CumulativeFrameType= int.Parse(ConfigXML.GetKeyString("CumulativeFrameType", "0"));
                 _HardwareAcc = bool.Parse(ConfigXML.GetKeyString("HardwareAcc", "false"));
+                _B_OtherGrid = bool.Parse(ConfigXML.GetKeyString("B_OtherGrid", "false"));
                 #endregion 图标参数
 
                 #region 数据存储
@@ -1288,7 +1383,12 @@ namespace UCM_Tools.Config
                 int.TryParse(ConfigXML.GetKeyString("TrackColorMode", "0"), out _TrackColorMode);
                 int.TryParse(ConfigXML.GetKeyString("TrackTextColor", "255"), out int colorTrackText);
                 _TrackTextColor = Color.FromArgb(colorTrackText); 
+                int.TryParse(ConfigXML.GetKeyString("Text2DFontSize", "14"), out _Text2DFontSize);
                 int.TryParse(ConfigXML.GetKeyString("TrackTextSize", "255"), out _TrackTextSize);
+                _TrackTextFixedSize = bool.Parse(ConfigXML.GetKeyString("TrackTextFixedSize", "false"));
+                double.TryParse(ConfigXML.GetKeyString("TrackTextScale", "2.0"), out _TrackTextScale);
+                _AxisTextFixedSize = bool.Parse(ConfigXML.GetKeyString("AxisTextFixedSize", "false"));
+                double.TryParse(ConfigXML.GetKeyString("AxisTextScale", "2.0"), out _AxisTextScale);
                 #region 跟踪轨迹
                 _DisplayTrackTrajectory = bool.Parse(ConfigXML.GetKeyString("DisplayTrackTrajectory", "false"));
                 float.TryParse(ConfigXML.GetKeyString("TrackTrajectoryLineWidth", "1"),out _TrackTrajectoryLineWidth);

@@ -1,4 +1,4 @@
-﻿using Kitware.VTK;
+using Kitware.VTK;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -13,7 +13,7 @@ namespace UCM_Tools.Tools
 {
     public class VTKHelper
     {
-		
+
 		public class LineInfo
         {
 			public double X0
@@ -64,9 +64,9 @@ namespace UCM_Tools.Tools
 				set;
 			}
 		}
-		
 
-        public vtkActor DrawGridHalf()
+
+        public vtkActor DrawGrid()
         {
             vtkPoints points = vtkPoints.New();
             vtkCellArray cells = vtkCellArray.New();
@@ -75,15 +75,16 @@ namespace UCM_Tools.Tools
             vtkPolyData vtkPolyData = vtkPolyData.New();
             Color color = SystemSetting.VTKBackColor?Color.LightGray : Color.FromArgb(56, 56, 56);
 			int i = 0;
+            double xyZ = SystemSetting.B_OtherGrid ? (double)SystemSetting.ZMin : 0.0;
             for (double column = SystemSetting.XMin; column <= SystemSetting.XMax; column = column + SystemSetting.XStep)
             {
                 VTKHelper.LineInfo lineInfo = new VTKHelper.LineInfo();
                 lineInfo.X0 = (double)column;
                 lineInfo.Y0 = (double)SystemSetting.YMin;
-                lineInfo.Z0 = 0.0;
+                lineInfo.Z0 = xyZ;
                 lineInfo.X1 = (double)column;
                 lineInfo.Y1 = (double)SystemSetting.YMax;
-                lineInfo.Z1 = 0.0;
+                lineInfo.Z1 = xyZ;
                 lineInfo.firstpoint = i * 2;
 				lineInfo.secondpoint = i * 2 + 1;
                 vtkPolyLine vtkpolyLine = vtkPolyLine.New();
@@ -96,17 +97,82 @@ namespace UCM_Tools.Tools
 				VTKHelper.LineInfo lineInfo = new VTKHelper.LineInfo();
 				lineInfo.X0 = SystemSetting.XMin;
 				lineInfo.Y0 = row;
-				lineInfo.Z0 = 0.0;
+				lineInfo.Z0 = xyZ;
 				lineInfo.X1 = SystemSetting.XMax;
 				lineInfo.Y1 = row;
-				lineInfo.Z1 = 0.0;
-                
+				lineInfo.Z1 = xyZ;
+
 				lineInfo.firstpoint = i * 2;
 				lineInfo.secondpoint = i * 2 + 1;
 				vtkPolyLine vtkpolyLine2 = vtkPolyLine.New();
 				vtkPolyData = this.DrawLine(vtkpolyLine2, points, cells, vtkUnsignedCharArray, vtkPolyData, lineInfo, color);
 				i++;
 
+            }
+            if (SystemSetting.B_OtherGrid)
+            {
+                // XZ平面 (Y=YMax)
+                for (double column = SystemSetting.XMin; column <= SystemSetting.XMax; column = column + SystemSetting.XStep)
+                {
+                    VTKHelper.LineInfo lineInfo = new VTKHelper.LineInfo();
+                    lineInfo.X0 = (double)column;
+                    lineInfo.Y0 = (double)SystemSetting.YMax;
+                    lineInfo.Z0 = (double)SystemSetting.ZMin;
+                    lineInfo.X1 = (double)column;
+                    lineInfo.Y1 = (double)SystemSetting.YMax;
+                    lineInfo.Z1 = (double)SystemSetting.ZMax;
+                    lineInfo.firstpoint = i * 2;
+                    lineInfo.secondpoint = i * 2 + 1;
+                    vtkPolyLine vtkpolyLine = vtkPolyLine.New();
+                    vtkPolyData = this.DrawLine(vtkpolyLine, points, cells, vtkUnsignedCharArray, vtkPolyData, lineInfo, color);
+                    i++;
+                }
+                for (double row = SystemSetting.ZMin; row <= SystemSetting.ZMax; row = row + SystemSetting.ZStep)
+                {
+                    VTKHelper.LineInfo lineInfo = new VTKHelper.LineInfo();
+                    lineInfo.X0 = SystemSetting.XMin;
+                    lineInfo.Y0 = (double)SystemSetting.YMax;
+                    lineInfo.Z0 = row;
+                    lineInfo.X1 = SystemSetting.XMax;
+                    lineInfo.Y1 = (double)SystemSetting.YMax;
+                    lineInfo.Z1 = row;
+                    lineInfo.firstpoint = i * 2;
+                    lineInfo.secondpoint = i * 2 + 1;
+                    vtkPolyLine vtkpolyLine2 = vtkPolyLine.New();
+                    vtkPolyData = this.DrawLine(vtkpolyLine2, points, cells, vtkUnsignedCharArray, vtkPolyData, lineInfo, color);
+                    i++;
+                }
+                // YZ平面 (X=XMin)
+                for (double column = SystemSetting.YMin; column <= SystemSetting.YMax; column = column + SystemSetting.YStep)
+                {
+                    VTKHelper.LineInfo lineInfo = new VTKHelper.LineInfo();
+                    lineInfo.X0 = (double)SystemSetting.XMin;
+                    lineInfo.Y0 = (double)column;
+                    lineInfo.Z0 = (double)SystemSetting.ZMin;
+                    lineInfo.X1 = (double)SystemSetting.XMin;
+                    lineInfo.Y1 = (double)column;
+                    lineInfo.Z1 = (double)SystemSetting.ZMax;
+                    lineInfo.firstpoint = i * 2;
+                    lineInfo.secondpoint = i * 2 + 1;
+                    vtkPolyLine vtkpolyLine = vtkPolyLine.New();
+                    vtkPolyData = this.DrawLine(vtkpolyLine, points, cells, vtkUnsignedCharArray, vtkPolyData, lineInfo, color);
+                    i++;
+                }
+                for (double row = SystemSetting.ZMin; row <= SystemSetting.ZMax; row = row + SystemSetting.ZStep)
+                {
+                    VTKHelper.LineInfo lineInfo = new VTKHelper.LineInfo();
+                    lineInfo.X0 = (double)SystemSetting.XMin;
+                    lineInfo.Y0 = SystemSetting.YMin;
+                    lineInfo.Z0 = row;
+                    lineInfo.X1 = (double)SystemSetting.XMin;
+                    lineInfo.Y1 = SystemSetting.YMax;
+                    lineInfo.Z1 = row;
+                    lineInfo.firstpoint = i * 2;
+                    lineInfo.secondpoint = i * 2 + 1;
+                    vtkPolyLine vtkpolyLine2 = vtkPolyLine.New();
+                    vtkPolyData = this.DrawLine(vtkpolyLine2, points, cells, vtkUnsignedCharArray, vtkPolyData, lineInfo, color);
+                    i++;
+                }
             }
             vtkPolyDataMapper vtkPolyDataMapper = vtkPolyDataMapper.New();
             vtkPolyDataMapper.SetInput(vtkPolyData);
@@ -202,78 +268,109 @@ namespace UCM_Tools.Tools
             // 关键：应用全局变换
             if (SystemSetting.NonUniformScale)
                 vtkActor2.SetUserTransform(SystemSetting.GlobalTransform);
+			if (SystemSetting.B_OtherGrid)
+				vtkActor2.VisibilityOff();
+			else
+                vtkActor2.VisibilityOn();
             return vtkActor2;
 		}
 
 		public List<vtkFollower> Scale(List<vtkFollower> followers)
 		{
+			bool otherGrid = SystemSetting.B_OtherGrid;
 			for (int i = SystemSetting.XMin; i <= SystemSetting.XMax; i = i + SystemSetting.XStep)
 			{
+				if (otherGrid && i == SystemSetting.XMax)
+					continue;
 				vtkVectorText vtkVectorText = vtkVectorText.New();
-				int value = i;
-				string text = Convert.ToString(value);
+				string text = Convert.ToString(i);
 				vtkVectorText.SetText(text);
-                // 必须调用Update()才能获取正确的边界框
-                vtkVectorText.Update();
-                // 获取文本几何体的边界框 [xmin, xmax, ymin, ymax, zmin, zmax]
-                double[] bounds = vtkVectorText.GetOutput().GetBounds();
-                // 计算文本中心点的X坐标（相对于文本原点）
-                double textCenterX = (bounds[0] + bounds[1]) / 2.0;
+				vtkVectorText.Update();
+				double[] bounds = vtkVectorText.GetOutput().GetBounds();
+				double textW = bounds[1] - bounds[0];
+				double textH = bounds[3] - bounds[2];
+				double xPos = (double)i - bounds[0] - textW / 2.0;
+				double yPos = otherGrid ? (double)SystemSetting.YMin - textH - 2 : -2.0 - textH;
+				double zPos = otherGrid ? (double)SystemSetting.ZMin - 2.0 : -2.0;
 
-                vtkPolyDataMapper vtkPolyDataMapper = vtkPolyDataMapper.New();
+				vtkPolyDataMapper vtkPolyDataMapper = vtkPolyDataMapper.New();
 				vtkPolyDataMapper.SetInputConnection(vtkVectorText.GetOutputPort());
 				vtkFollower vtkFollower = vtkFollower.New();
 				vtkFollower.SetMapper(vtkPolyDataMapper);
-				vtkFollower.AddPosition((double)(i- textCenterX), 0.0 - 2, -2);
-				//在Activiz.NET中，vtkFollower.GetProperty().SetPointSize()对3D几何体文本无效，因为vtkVectorText生成的是多边形面片而非点精灵。要缩小文本，需使用 Scale() 方法统一缩放Actor
-				vtkFollower.GetProperty().SetPointSize(0.5f);
-                if (SystemSetting.VTKBackColor)
-                    vtkFollower.GetProperty().SetColor(0.502, 0.502, 0.502);
-                // 关键：应用全局变换
-                if (SystemSetting.NonUniformScale)
-                    vtkFollower.SetUserTransform(SystemSetting.GlobalTransform);
-                followers.Add(vtkFollower);
+				vtkFollower.SetPosition(xPos, yPos, zPos);
+				vtkFollower.GetProperty().SetPointSize(0.1f);
+				if (SystemSetting.VTKBackColor)
+					vtkFollower.GetProperty().SetColor(0.502, 0.502, 0.502);
+				if (SystemSetting.NonUniformScale)
+					vtkFollower.SetUserTransform(SystemSetting.GlobalTransform);
+				followers.Add(vtkFollower);
 				vtkPolyDataMapper.Dispose();
 				vtkVectorText.Dispose();
-
-            }
-			for (int j = SystemSetting.YMin; j <= SystemSetting.YMax; j+= SystemSetting.YStep)
+			}
+			for (int j = SystemSetting.YMin; j <= SystemSetting.YMax; j += SystemSetting.YStep)
 			{
-				if (j == 0)
+				if (j == 0 || (otherGrid && j == SystemSetting.YMax))
 					continue;
 				vtkVectorText vtkVectorText2 = vtkVectorText.New();
-				int value2 = j;
-				string text2 = Convert.ToString(value2);
+				string text2 = Convert.ToString(j);
 				vtkVectorText2.SetText(text2);
-                // 必须调用Update()才能获取正确的边界框
-                vtkVectorText2.Update();
-                // 获取文本几何体的边界框 [xmin, xmax, ymin, ymax, zmin, zmax]
-                double[] bounds = vtkVectorText2.GetOutput().GetBounds();
-                // 计算文本中心点的X坐标（相对于文本原点）
-                double textCenterY = (bounds[2] + bounds[3]) / 2.0;
-                vtkPolyDataMapper vtkPolyDataMapper2 = vtkPolyDataMapper.New();
+				vtkVectorText2.Update();
+				double[] bounds = vtkVectorText2.GetOutput().GetBounds();
+				double textW = bounds[1] - bounds[0];
+				double textH = bounds[3] - bounds[2];
+				double xPos = otherGrid ? (double)SystemSetting.XMax + 2 : (double)(SystemSetting.XMin - 2) - textW;
+				double yPos = (double)j - bounds[2] - textH /2.0d;
+				double zPos = otherGrid ? (double)SystemSetting.ZMin - 2.0 : -2.0;
+				vtkPolyDataMapper vtkPolyDataMapper2 = vtkPolyDataMapper.New();
 				vtkPolyDataMapper2.SetInputConnection(vtkVectorText2.GetOutputPort());
 				vtkFollower vtkFollower2 = vtkFollower.New();
 				vtkFollower2.SetMapper(vtkPolyDataMapper2);
-				vtkFollower2.AddPosition(SystemSetting.XMin-2, (double)(j- textCenterY), -2);
-                //在Activiz.NET中，vtkFollower.GetProperty().SetPointSize()对3D几何体文本无效，因为vtkVectorText生成的是多边形面片而非点精灵。要缩小文本，需使用 Scale() 方法统一缩放Actor
-                vtkFollower2.GetProperty().SetPointSize(0.5f);
-                if (SystemSetting.VTKBackColor)
-                    vtkFollower2.GetProperty().SetColor(0.502, 0.502, 0.502);
-                // 关键：应用全局变换
-                if (SystemSetting.NonUniformScale)
-                    vtkFollower2.SetUserTransform(SystemSetting.GlobalTransform);
-                followers.Add(vtkFollower2);
-                vtkPolyDataMapper2.Dispose();
-                vtkVectorText2.Dispose();
-            }
+				vtkFollower2.SetPosition(xPos, yPos, zPos);
+				vtkFollower2.GetProperty().SetPointSize(0.1f);
+				if (SystemSetting.VTKBackColor)
+					vtkFollower2.GetProperty().SetColor(0.502, 0.502, 0.502);
+				if (SystemSetting.NonUniformScale)
+					vtkFollower2.SetUserTransform(SystemSetting.GlobalTransform);
+				followers.Add(vtkFollower2);
+				vtkPolyDataMapper2.Dispose();
+				vtkVectorText2.Dispose();
+			}
+			if (otherGrid)
+			{
+				for (int k = SystemSetting.ZMin; k <= SystemSetting.ZMax; k += SystemSetting.ZStep)
+				{
+					if (k == SystemSetting.ZMax || k== SystemSetting.ZMin)
+						continue;
+					vtkVectorText vtkVectorText3 = vtkVectorText.New();
+					string text3 = Convert.ToString(k);
+					vtkVectorText3.SetText(text3);
+					vtkVectorText3.Update();
+					double[] bounds = vtkVectorText3.GetOutput().GetBounds();
+					double textW = bounds[1] - bounds[0];
+					double textD = bounds[3] - bounds[2];
+					double zPos = (double)k - textD / 2.0;
+					vtkPolyDataMapper vtkPolyDataMapper3 = vtkPolyDataMapper.New();
+					vtkPolyDataMapper3.SetInputConnection(vtkVectorText3.GetOutputPort());
+					vtkFollower vtkFollower3 = vtkFollower.New();
+					vtkFollower3.SetMapper(vtkPolyDataMapper3);
+					vtkFollower3.SetPosition((double)SystemSetting.XMax + 2, (double)SystemSetting.YMax, zPos);
+					vtkFollower3.GetProperty().SetPointSize(0.1f);
+					if (SystemSetting.VTKBackColor)
+						vtkFollower3.GetProperty().SetColor(0.502, 0.502, 0.502);
+					if (SystemSetting.NonUniformScale)
+						vtkFollower3.SetUserTransform(SystemSetting.GlobalTransform);
+					followers.Add(vtkFollower3);
+					vtkPolyDataMapper3.Dispose();
+					vtkVectorText3.Dispose();
+				}
+			}
 
 			return followers;
 		}
 
         public static vtkActor ShowPointCloud2(vtkActor vtkActor, vtkFloatArray myscalar, vtkPoints Points, vtkPolyData polyData, vtkLookupTable lookupTable, vtkVertexGlyphFilter glyphFilter, vtkPolyDataMapper pointmap, List<TargetInfo.RadarTargetInfoStruct> point)
         {
-            
+
             bool flag3 = point != null;
             if (flag3)
             {
@@ -303,7 +400,7 @@ namespace UCM_Tools.Tools
 						textActor = vtkTextActor3D.New();
 						textproperty = VTKHelper.SetTextProperty(textproperty);
 						string text = GetDetectionText(textlist[i]);
-						
+
 						textActor.SetInput(text);
 						textActor.SetTextProperty(textproperty);
 						textActor.SetPosition(textlist[i].XAxis, textlist[i].YAxis, textlist[i].ZAxis);
@@ -350,7 +447,7 @@ namespace UCM_Tools.Tools
 			text.Append(SystemSetting.Tar_A ? $" A={tar.PAngle:F2}" : "");
 			text.Append(SystemSetting.Tar_C ? $" C={tar.Confidence}" : "");
             //string text = $"{(SystemSetting.Tar_ID?$"ID={tar.ID} ":"")}{(SystemSetting.Tar_X ? $" X={tar.XAxis:F3}m " : "")}{(SystemSetting.Tar_Y ? $" Y={tar.YAxis:F3}m " : "")}{(SystemSetting.Tar_Z ? $" Z={tar.ZAxis:F3}m " : "")}{(SystemSetting.Tar_V ? $" V={tar.Velocity:F3}m/s " : "")}{(SystemSetting.Tar_A ? $" A={tar.PAngle:F3}deg " : "")}{(SystemSetting.Tar_C ? $" C={tar.Confidence} " : "")} ";
-            
+
             return text.ToString().TrimStart().TrimEnd(';');
         }
 
@@ -445,7 +542,7 @@ namespace UCM_Tools.Tools
 					Points.InsertNextPoint(list[i].XAxis, list[i].YAxis, list[i].ZAxis);
 					myscalar.InsertTuple1(num2, (double)num2);
 					double z = list[i].ZAxis;
-                    
+
 					if(z > SystemSetting.RedValue)//红
 						lookupTable.SetTableValue(num2, 1.0, 0.0, 0.0, transparency);
 					else if(z <= SystemSetting.RedValue && z > SystemSetting.OrangeValue)//橙

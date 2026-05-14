@@ -148,6 +148,17 @@ namespace UCM_Tools.Radar
             if (pointCloudSaveEvent != null)
                 pointCloudSaveEvent(frame,list,trackList);
         }
+        /// <summary>
+        /// ImuAndGpsData保存数据委托
+        /// </summary>
+        public delegate void ImuAndGpsSaveDataDeleagte(string time, IMUAndGPSData imuAndGpsData);
+        [method: CompilerGenerated]
+        public event ImuAndGpsSaveDataDeleagte imuAndGpsSaveEvent;
+        public void OnImuAndGpsSaveDataEvent(string time, IMUAndGPSData imuAndGpsData)
+        {
+            if (imuAndGpsSaveEvent != null && imuAndGpsData != null)
+                imuAndGpsSaveEvent(time, imuAndGpsData);
+        }
         #endregion 事件委托
 
         public async Task<bool> Start(string name,string connType)
@@ -214,9 +225,10 @@ namespace UCM_Tools.Radar
             OnParamRespDataEvent(function, resultValue, flag, size, bytes);
         }
 
-        private void RadarProtcol_tarAndClusterPointCloud(string time, List<TargetInfo.RadarTargetInfoStruct> targetInfoList, List<TargetInfo.RadarTargetInfoStruct> clusterInfoList)
+        private void RadarProtcol_tarAndClusterPointCloud(string time, List<TargetInfo.RadarTargetInfoStruct> targetInfoList, List<TargetInfo.RadarTargetInfoStruct> clusterInfoList, IMUAndGPSData imuAndGpsData = null)
         {
             OnTarAndClusterPointCloudEvent(time,targetInfoList, clusterInfoList);
+            OnImuAndGpsSaveDataEvent(time, imuAndGpsData);
         }
 
         private void RadarProtcol_frameEvent(uint frameId, byte[] frameData)

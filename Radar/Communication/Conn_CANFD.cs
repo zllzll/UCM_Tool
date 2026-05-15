@@ -20,6 +20,13 @@ namespace UCM_Tools.Radar.Communication
         private bool _connected = false;
         public override bool IsConnected => _connected;
 
+        private readonly int _reconnectIntervalMs = 3000;
+        private readonly int _maxReconnectCount = -1;
+        private int _currentReconnnectCount = 0;
+        private Timer _reconnectTimer;
+        private Timer _heartbeatTimer;
+        private bool _isReconnecting = false;
+
         /// <summary>
         /// 接收线程
         /// </summary>
@@ -27,6 +34,8 @@ namespace UCM_Tools.Radar.Communication
 
         public override void CloseDevice()
         {
+            StopReconnect();
+            StopHeartbeatCheck();
             _connected = false;
             if (recv_data_thread != null)
             {
@@ -35,8 +44,8 @@ namespace UCM_Tools.Radar.Communication
                 recv_data_thread?.setStart(_connected);
             }
             recv_data_thread = null;
-            //关闭设备
             CAN_Function.CloseCAN(connParams);
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? "重连中..." : "已手动断开连接");
         }
 
 
@@ -46,23 +55,28 @@ namespace UCM_Tools.Radar.Communication
             {
                 if (connParams == null)
                     return false;
-                //连接设备
                 if (!CAN_Function.OpenCAN(connParams)) return false;
-
                 if (!CAN_Function.InitCAN(connParams)) return false;
-
                 if (!CAN_Function.StartCAN(connParams)) return false;
                 _connected = true;
+                _currentReconnnectCount = 0;
+                _isReconnecting = false;
+                StopReconnect();
                 recv_data_thread = new recvdatathread();
                 recv_data_thread.canFactory = connParams.CAN_Company;
                 recv_data_thread.setChannelHandle(CAN_Function.GetChannel());
                 recv_data_thread.setStart(_connected);
                 recv_data_thread.RecvCANData += RecvData;
                 recv_data_thread.RecvFDData += RecvDataFD;
+                OnConnectStatusChanged?.Invoke(true, "连接成功");
+                StartHeartbeatCheck();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error($"Conn_CANFD OpenDevice() Ex\r\n{ex.ToString()}");
+                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                StartReconnect();
                 return false;
             }
         }
@@ -115,5 +129,52 @@ namespace UCM_Tools.Radar.Communication
         }
 
         #endregion 接收数据
+
+        private bool GetConnected()
+        {
+            return _connected && recv_data_thread != null && CAN_Function.GetChannel() != IntPtr.Zero;
+        }
+
+        private void StartReconnect()
+        {
+            StopReconnect();
+            if (_maxReconnectCount != -1 && _currentReconnnectCount >= _maxReconnectCount)
+            {
+                _isReconnecting = false;
+                OnConnectStatusChanged?.Invoke(false, "已达到最大重连次数，停止重连");
+                return;
+            }
+            _isReconnecting = true;
+            _reconnectTimer = new Timer(async (state) =>
+            {
+                _currentReconnnectCount++;
+                OnConnectStatusChanged?.Invoke(false, $"正在第{_currentReconnnectCount}次重连...");
+                await OpenDevice();
+            }, null, _reconnectIntervalMs, Timeout.Infinite);
+        }
+
+        private void StopReconnect()
+        {
+            _reconnectTimer?.Dispose();
+            _reconnectTimer = null;
+        }
+
+        private void StartHeartbeatCheck()
+        {
+            StopHeartbeatCheck();
+            _heartbeatTimer = new Timer((state) =>
+            {
+                if (!GetConnected())
+                {
+                    OnConnectStatusChanged?.Invoke(false, "CAN设备连接已断开");
+                    StartReconnect();
+                }
+            }, null, 0, 5000);
+        }
+        private void StopHeartbeatCheck()
+        {
+            _heartbeatTimer?.Dispose();
+            _heartbeatTimer = null;
+        }
     }
 }

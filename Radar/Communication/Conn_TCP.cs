@@ -24,23 +24,23 @@ namespace UCM_Tools.Radar.Communication
         private int _currentReconnnectCount = 0;//当前重连次数
         private Timer _reconnectTimer;//重连定时器
         private Timer _heartbeatTimer;//心跳检测定时器
+        private bool _isReconnecting = false;//是否正在自动重连中
         public override bool IsConnected => _connected;
 
         public override void CloseDevice()
         {
-            //StopReconnect();
-            //StopHeartbeatCheck();
+            StopReconnect();
+            StopHeartbeatCheck();
             _connected = false;
             if (threadRecv != null)
             {
                 threadRecv?.Join();
             }
             threadRecv = null;
-            //关闭设备
             if (tcpClient != null)
                 tcpClient.Close();
             tcpClient = null;
-            //OnConnectStatusChanged?.Invoke(false,"已手动断开连接");
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? "重连中..." : "已手动断开连接");
         }
 
         public override async Task<bool> OpenDevice()
@@ -78,32 +78,30 @@ namespace UCM_Tools.Radar.Communication
                 var timeoutTask = Task.Delay(timeoutMs);
                 if (await Task.WhenAny(connectedTask, timeoutTask) == timeoutTask)
                 {
-                    //StartReconnect();
-                    //OnConnectStatusChanged?.Invoke(false,"连接超时");
+                    StartReconnect();
+                    OnConnectStatusChanged?.Invoke(false, "连接超时");
                     return false;
                 }
                 await connectedTask;
-                _currentReconnnectCount = 0;//重置计数器
-                //OnConnectStatusChanged?.Invoke(false,"连接成功");
-                //StartHeartbeatCheck();//启动心跳检测
+                _currentReconnnectCount = 0;
+                _isReconnecting = false;
+                StopReconnect();
+                OnConnectStatusChanged?.Invoke(true, "连接成功");
+                StartHeartbeatCheck();
                 return true;
             }
             catch (SocketException ex)
             {
-                //string errorMsg = $"连接失败：{ex.Message}(错误码：{ex.ErrorCode})";
-                //OnErrorOccurred?.Invoke( errorMsg);
-                //OnConnectStatusChanged?.Invoke(false,errorMsg);
-                //StartReconnect();
                 Log.Error($"ConnectedQuickly({ip},{port},{timeoutMs}) Ex\r\n{ex.ToString()}");
+                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                StartReconnect();
                 return false;
             }
             catch (Exception ex)
             {
-                //string errorMsg = $"连接失败：{ex.Message}";
-                //OnErrorOccurred?.Invoke( errorMsg);
-                //OnConnectStatusChanged?.Invoke(false,errorMsg);
-                //StartReconnect();
                 Log.Error($"ConnectedQuickly({ip},{port},{timeoutMs}) Ex\r\n{ex.ToString()}");
+                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                StartReconnect();
                 return false;
             }
         }
@@ -118,7 +116,6 @@ namespace UCM_Tools.Radar.Communication
 
         private void RecvTCPData()
         {
-
             while (_connected)
             {
                 try
@@ -131,9 +128,15 @@ namespace UCM_Tools.Radar.Communication
                     }
                     byte[] recvBytes = new byte[num.Value];
                     tcpClient.Client.Receive(recvBytes, num.Value, SocketFlags.None);
-                    //Console.WriteLine($"通讯类：{BitConverter.ToString(recvBytes)}");
-                    if(OnRecvConnDataEvent!=null)
+                    if (OnRecvConnDataEvent != null)
                         OnRecvConnDataEvent(new ConnData(recvBytes));
+                }
+                catch (SocketException)
+                {
+                    _connected = false;
+                    OnConnectStatusChanged?.Invoke(false, "连接已断开");
+                    StartReconnect();
+                    break;
                 }
                 catch (Exception ex)
                 {
@@ -166,14 +169,16 @@ namespace UCM_Tools.Radar.Communication
             StopReconnect();
             if (_maxReconnectCount != -1 && _currentReconnnectCount >= _maxReconnectCount)
             {
-                //OnConnectStatusChanged?.Invoke(false,"已达到最大重连次数，停止重连");
+                _isReconnecting = false;
+                OnConnectStatusChanged?.Invoke(false, "已达到最大重连次数，停止重连");
                 return;
             }
+            _isReconnecting = true;
             _reconnectTimer = new Timer(async (state) =>
             {
                 _currentReconnnectCount++;
-                //OnConnectStatusChanged?.Invoke(false,$"正在第{_currentReconnnectCount}次重连...");
-                await OpenDevice();//重试连接
+                OnConnectStatusChanged?.Invoke(false, $"正在第{_currentReconnnectCount}次重连...");
+                await OpenDevice();
             }, null, _reconnectIntervalMs, Timeout.Infinite);
         }
 
@@ -185,17 +190,17 @@ namespace UCM_Tools.Radar.Communication
 
         private void StartHeartbeatCheck()
         {
-            StoptHeartbeatCheck();
+            StopHeartbeatCheck();
             _heartbeatTimer = new Timer((state) =>
             {
                 if (!GetConnected())
                 {
-                    //OnConnectStatusChanged?.Invoke(false,$"连接已断开");
-                    StartReconnect();//断线重连
+                    OnConnectStatusChanged?.Invoke(false, "连接已断开");
+                    StartReconnect();
                 }
-            }, null, 0, 5000);//5秒检测一次
+            }, null, 0, 5000);
         }
-        private void StoptHeartbeatCheck()
+        private void StopHeartbeatCheck()
         {
             _heartbeatTimer?.Dispose();
             _heartbeatTimer = null;

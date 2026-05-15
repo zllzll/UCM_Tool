@@ -20,23 +20,29 @@ namespace UCM_Tools.Radar.Communication
         Thread threadRecv = null;
         private bool _connected = false;
 
+        private readonly int _reconnectIntervalMs = 3000;
+        private readonly int _maxReconnectCount = -1;
+        private int _currentReconnnectCount = 0;
+        private Timer _reconnectTimer;
+        private Timer _heartbeatTimer;
+        private bool _isReconnecting = false;
+
         public override bool IsConnected => _connected;
 
         public override void CloseDevice()
         {
-            //StopReconnect();
-            //StopHeartbeatCheck();
+            StopReconnect();
+            StopHeartbeatCheck();
             _connected = false;
             if (threadRecv != null)
             {
                 threadRecv?.Join();
             }
             threadRecv = null;
-            //关闭设备
             if (_serial != null)
                 _serial.Close();
             _serial = null;
-            //OnConnectStatusChanged?.Invoke(false,"已手动断开连接");
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? "重连中..." : "已手动断开连接");
         }
 
         public override async Task<bool> OpenDevice()
@@ -45,7 +51,7 @@ namespace UCM_Tools.Radar.Communication
             {
                 if (connParams == null)
                     return false;
-                CloseDevice();//关闭现有连接，避免重连
+                CloseDevice();
                 _serial = new SerialPort()
                 {
                     PortName = connParams.COM_No,
@@ -56,14 +62,21 @@ namespace UCM_Tools.Radar.Communication
                 };
                 _serial.Open();
                 _connected = true;
+                _currentReconnnectCount = 0;
+                _isReconnecting = false;
+                StopReconnect();
                 threadRecv = new Thread(RecvCOMData);
                 threadRecv.IsBackground = true;
                 threadRecv.Start();
+                OnConnectStatusChanged?.Invoke(true, "连接成功");
+                StartHeartbeatCheck();
                 return true;
             }
             catch (Exception ex)
             {
                 Log.Error($"Conn_COM OpenDevice() Ex\r\n{ex.ToString()}");
+                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                StartReconnect();
             }
             return false;
         }
@@ -83,7 +96,6 @@ namespace UCM_Tools.Radar.Communication
 
         private void RecvCOMData()
         {
-
             while (_connected)
             {
                 try
@@ -95,15 +107,68 @@ namespace UCM_Tools.Radar.Communication
                         continue;
                     }
                     byte[] recvBytes = new byte[num.Value];
-                    _serial?.Read(recvBytes,0, num.Value);
+                    _serial?.Read(recvBytes, 0, num.Value);
                     if (OnRecvConnDataEvent != null)
                         OnRecvConnDataEvent(new ConnData(recvBytes));
+                }
+                catch (InvalidOperationException)
+                {
+                    _connected = false;
+                    OnConnectStatusChanged?.Invoke(false, "串口连接已断开");
+                    StartReconnect();
+                    break;
                 }
                 catch (Exception ex)
                 {
                     Log.Error($"RecvCOMData() Ex\r\n{ex.ToString()}");
                 }
             }
+        }
+        private bool GetConnected()
+        {
+            return _serial != null && _serial.IsOpen;
+        }
+
+        private void StartReconnect()
+        {
+            StopReconnect();
+            if (_maxReconnectCount != -1 && _currentReconnnectCount >= _maxReconnectCount)
+            {
+                _isReconnecting = false;
+                OnConnectStatusChanged?.Invoke(false, "已达到最大重连次数，停止重连");
+                return;
+            }
+            _isReconnecting = true;
+            _reconnectTimer = new Timer(async (state) =>
+            {
+                _currentReconnnectCount++;
+                OnConnectStatusChanged?.Invoke(false, $"正在第{_currentReconnnectCount}次重连...");
+                await OpenDevice();
+            }, null, _reconnectIntervalMs, Timeout.Infinite);
+        }
+
+        private void StopReconnect()
+        {
+            _reconnectTimer?.Dispose();
+            _reconnectTimer = null;
+        }
+
+        private void StartHeartbeatCheck()
+        {
+            StopHeartbeatCheck();
+            _heartbeatTimer = new Timer((state) =>
+            {
+                if (!GetConnected())
+                {
+                    OnConnectStatusChanged?.Invoke(false, "串口连接已断开");
+                    StartReconnect();
+                }
+            }, null, 0, 3000);
+        }
+        private void StopHeartbeatCheck()
+        {
+            _heartbeatTimer?.Dispose();
+            _heartbeatTimer = null;
         }
     }
 }

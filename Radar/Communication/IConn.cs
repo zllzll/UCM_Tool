@@ -36,6 +36,10 @@ namespace UCM_Tools.Radar.Communication
         public RecvBytesDataEventHandler OnRecvBytesDataEvent;
         public RecvConnDataEventHandler OnRecvConnDataEvent;
 
+        [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+        public delegate void ConnStatusChangedHandler(bool isConnected, string message);
+        public ConnStatusChangedHandler OnConnectStatusChanged;
+
 
         public event RecvCANDataEventHandler RecvCANData
         {
@@ -57,6 +61,11 @@ namespace UCM_Tools.Radar.Communication
         {
             add { OnRecvConnDataEvent += new RecvConnDataEventHandler(value); }
             remove { OnRecvConnDataEvent -= new RecvConnDataEventHandler(value); }
+        }
+        public event ConnStatusChangedHandler ConnStatusChanged
+        {
+            add { OnConnectStatusChanged += new ConnStatusChangedHandler(value); }
+            remove { OnConnectStatusChanged -= new ConnStatusChangedHandler(value); }
         }
 
         #region 辅助方法

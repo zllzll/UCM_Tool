@@ -86,13 +86,19 @@ namespace UCM_Tools.Forms
         private vtkActor pointCloudActor = null;
         private vtkPolyData pointCloudData = null;
         private vtkPoints pointCloudPoints = null;
-        private vtkFloatArray pointCloudScalars = null;
-        private vtkLookupTable pointCloudLookupTable = null;
+        private vtkUnsignedCharArray pointCloudColors = null; // 直接颜色数组（替代LookupTable）
+        private vtkVertexGlyphFilter pointCloudGlyphFilter = null; // 保留引用不复用
         private vtkPolyDataMapper pointCloudMapper = null;
         private List<vtkTextActor3D> active3DTextActors = new List<vtkTextActor3D>();
         private Queue<vtkTextActor3D> text3DActorPool = new Queue<vtkTextActor3D>();
         private List<vtkTextActor> active2DTextActors = new List<vtkTextActor>();
         private Queue<vtkTextActor> text2DActorPool = new Queue<vtkTextActor>();
+        // 性能优化：复用对象
+        private vtkCoordinate cachedCoordinate = null;
+        private double[] cachedCameraPos = new double[3];
+        // 轨迹增量更新
+        private HashSet<uint> trajectoryDirtyIds = new HashSet<uint>();
+        private Dictionary<uint, int> trajectoryBaseIndex = new Dictionary<uint, int>();
 
         #region 跟踪目标轨迹
         // 轨迹Actor（使用vtkPolyData表示线条）
@@ -360,10 +366,15 @@ namespace UCM_Tools.Forms
                 pointCloudPoints.Dispose();
                 pointCloudPoints = null;
             }
-            if (pointCloudLookupTable != null)
+            if (pointCloudColors != null)
             {
-                pointCloudLookupTable.Dispose();
-                pointCloudLookupTable = null;
+                pointCloudColors.Dispose();
+                pointCloudColors = null;
+            }
+            if (pointCloudGlyphFilter != null)
+            {
+                pointCloudGlyphFilter.Dispose();
+                pointCloudGlyphFilter = null;
             }
 
             // 清理激活的文本Actor
@@ -794,6 +805,7 @@ namespace UCM_Tools.Forms
                 radar.tarAndClusterPointCloud += Radar_tarAndClusterPointCloud;
                 radar.pointCloudSaveEvent += Radar_pointCloudSaveEvent;
                 radar.imuAndGpsSaveEvent += Radar_imuAndGpsSaveEvent;
+                radar.connectStatusChangedEvent += Radar_connectStatusChangedEvent;
                 radar.SendCmd(RadarCommand.ReadSoftwareVersion);
                 return true;
             }
@@ -811,6 +823,34 @@ namespace UCM_Tools.Forms
         {
             string ver = version;
             this.Invoke((EventHandler)delegate { lb_Version.Text = $"v{ver}"; });
+        }
+
+        private void Radar_connectStatusChangedEvent(bool isConnected, string message)
+        {
+            this.Invoke((Action)(() =>
+            {
+                if (isConnected)
+                {
+                    // 重连成功：清除断连期间积累的动态渲染数据，避免轨迹断裂
+                    lock (trajectoryLock)
+                    {
+                        trackTrajectories.Clear();
+                    }
+                    targetFrameTemp.Clear();
+                    targetTemp.Clear();
+                    trajectoryDirtyIds.Clear();
+                    trajectoryBaseIndex.Clear();
+                    ClearTrajectoryData();
+                    ClearPointCloud();
+                    ClearTrackTargets();
+                    dynamicFollowerText.HideAll();
+                    MsgForeColor(rtb_SystemMessage, message, "SUCCESS");
+                }
+                else
+                {
+                    MsgForeColor(rtb_SystemMessage, message, "INFO");
+                }
+            }));
         }
 
         #region 新绘图事件
@@ -842,25 +882,30 @@ namespace UCM_Tools.Forms
                     saveData = null;
                 }
             }
-            targetFrameTemp.Add(targetInfoList);
-            targetTemp.Clear();
-            foreach (var item in targetFrameTemp)
-                targetTemp.AddRange(item);
-            List<TargetInfo.RadarTargetInfoStruct> LoadTemp = targetTemp.ToList();
-            if (targetFrameTemp.Count >= SystemSetting.CumulativeFrameNum)
+            List<TargetInfo.RadarTargetInfoStruct> LoadTemp;
+            if (SystemSetting.CumulativeFrameNum <= 1)
             {
-
-                if (SystemSetting.CumulativeFrameType == 1)//每显示cumulativeFrameSum帧数据清空再积累
+                LoadTemp = targetInfoList;
+            }
+            else
+            {
+                targetFrameTemp.Add(targetInfoList);
+                targetTemp.Clear();
+                foreach (var item in targetFrameTemp)
+                    targetTemp.AddRange(item);
+                LoadTemp = new List<TargetInfo.RadarTargetInfoStruct>(targetTemp);
+                if (targetFrameTemp.Count >= SystemSetting.CumulativeFrameNum)
                 {
-                    targetFrameTemp.Clear();
-                }
-                else//if(SystemSetting.CumulativeFrameType == 0)//cumulativeFrameSum帧数据保留积累最新cumulativeFrameSum
-                {
-                    int removeNum = targetFrameTemp.Count - SystemSetting.CumulativeFrameNum;
-                    if (removeNum > 0)
-                        targetFrameTemp.RemoveRange(0, removeNum + 1);
-                    else if (removeNum == 0)
-                        targetFrameTemp.RemoveAt(0);
+                    if (SystemSetting.CumulativeFrameType == 1)
+                        targetFrameTemp.Clear();
+                    else
+                    {
+                        int removeNum = targetFrameTemp.Count - SystemSetting.CumulativeFrameNum;
+                        if (removeNum > 0)
+                            targetFrameTemp.RemoveRange(0, removeNum + 1);
+                        else if (removeNum == 0)
+                            targetFrameTemp.RemoveAt(0);
+                    }
                 }
             }
             UpdateLabels(targetInfoList.Count, LoadTemp.Count, 0);
@@ -873,6 +918,7 @@ namespace UCM_Tools.Forms
 
         #region 核心变更
         int textRefreshCounter = 0; // 文本刷新计数器
+        int trackTextSkipCounter = 0; // 跟踪文本跳帧计数器（2D文本模式下控制刷新频率）
         private void UpdatePointCloud(List<TargetInfo.RadarTargetInfoStruct> pointData = null, List<TargetInfo.RadarTargetInfoStruct> trackData = null, Dictionary<uint, Queue<TargetInfo.RadarTargetInfoStruct>> trackTrajectoriesTemp = null)
         {
             // 双重检查，防止Invoke延迟导致最小化后仍执行渲染
@@ -895,9 +941,18 @@ namespace UCM_Tools.Forms
             {
                 Invoke(new Action(() =>
                 {
-                    // 1. 同步清理上一帧文本（关键！）
+                    // 缓存相机位置（本帧内复用）
+                    if (firstRenderer?.GetActiveCamera() != null)
+                    {
+                        double[] pos = firstRenderer.GetActiveCamera().GetPosition();
+                        cachedCameraPos[0] = pos[0];
+                        cachedCameraPos[1] = pos[1];
+                        cachedCameraPos[2] = pos[2];
+                    }
+
+                    // 1. 同步清理上一帧文本
                     ClearTextActors();
-                    ClearTrackTextActors(); // 新增：清理跟踪目标文字
+                    ClearTrackTextActors();
 
                     // 2. 初始化或复用点云Actor
                     if (pointCloudActor == null) InitializePointCloudActor();
@@ -913,7 +968,7 @@ namespace UCM_Tools.Forms
                     {
                         // 清空点云但保留Actor
                         pointCloudPoints.Reset();
-                        pointCloudScalars.Reset();
+                        pointCloudColors.Reset();
                         pointCloudData.Modified();
                     }
                     // 4. 新增：更新跟踪目标数据
@@ -927,31 +982,29 @@ namespace UCM_Tools.Forms
                         // 5. 新增：添加跟踪目标文字（强制显示ID和坐标）
                         if (SystemSetting.DisplayTrackText)
                         {
-                            //textRefreshCounter++;
-                            //当丢失焦点的时候，前面已经判定了250ms时间才刷新一次文本，这里就不再限制10帧刷新一次了，直接每帧刷新，保证文本信息的及时更新，虽然可能会有性能影响，但丢失焦点时性能已经不是主要问题了
                             if (isLostFocus || (!isLostFocus && (DateTime.Now - lastDrawTime).TotalMilliseconds > SystemSetting.VtkDrawTimeInLostFocus))
                             {
-                                // 使用新的高性能方案
-                                dynamicFollowerText.UpdateFrame(
-                                    trackData,
-                                    SystemSetting.NonUniformScale,
-                                    SystemSetting.GlobalTransform
-                                );
-                                //textRefreshCounter = 0;
+                                if (SystemSetting.UseScreenSpaceText)
+                                {
+                                    AddTrack2DTextBatch(trackData);
+                                }
+                                else
+                                {
+                                    dynamicFollowerText.UpdateFrame(
+                                        trackData,
+                                        SystemSetting.NonUniformScale,
+                                        SystemSetting.GlobalTransform
+                                    );
+                                }
                             }
                             lastDrawTime = DateTime.Now;
-                            //if (SystemSetting.UseScreenSpaceText)
-                            //{
-                            //    AddTrack2DTextBatch(trackData); // 跟踪目标使用独立方法
-                            //}
-                            //else
-                            //{
-                            //    AddTrack3DTextBatch(trackData);
-                            //}
                         }
                         else
                         {
-                            dynamicFollowerText.HideAll();
+                            if (!SystemSetting.UseScreenSpaceText)
+                            {
+                                dynamicFollowerText.HideAll();
+                            }
                         }
                     }
                     else
@@ -968,7 +1021,10 @@ namespace UCM_Tools.Forms
                         //    false,
                         //    null
                         //);
-                        dynamicFollowerText.HideAll();
+                        if (!SystemSetting.UseScreenSpaceText)
+                        {
+                            dynamicFollowerText.HideAll();
+                        }
                     }
 
                     // 4. 添加文本（可配置是否限制）
@@ -1013,165 +1069,122 @@ namespace UCM_Tools.Forms
 
 
 
-        /// <summary>
-        /// 按距离相机远近排序（取最近N个）
-        /// </summary>
         private List<TargetInfo.RadarTargetInfoStruct> SortByCameraDistance(List<TargetInfo.RadarTargetInfoStruct> targets)
         {
-            if (firstRenderer == null) return targets.Take(20).ToList();
+            if (firstRenderer == null) return new List<TargetInfo.RadarTargetInfoStruct>(targets.Take(20));
 
-            double[] cameraPos = firstRenderer.GetActiveCamera().GetPosition();
+            double cx = cachedCameraPos[0], cy = cachedCameraPos[1], cz = cachedCameraPos[2];
+            int takeN = SystemSetting.UseScreenSpaceText ? SystemSetting.Max2DTextCount : SystemSetting.Max3DTextCount;
             return targets
                 .OrderBy(t =>
-                    (t.XAxis - cameraPos[0]) * (t.XAxis - cameraPos[0]) +
-                    (t.YAxis - cameraPos[1]) * (t.YAxis - cameraPos[1]) +
-                    (t.ZAxis - cameraPos[2]) * (t.ZAxis - cameraPos[2]))
-                .Take(SystemSetting.UseScreenSpaceText ? SystemSetting.Max2DTextCount : SystemSetting.Max3DTextCount)
+                    (t.XAxis - cx) * (t.XAxis - cx) +
+                    (t.YAxis - cy) * (t.YAxis - cy) +
+                    (t.ZAxis - cz) * (t.ZAxis - cz))
+                .Take(takeN)
                 .ToList();
         }
 
         // 初始化点云Actor（仅执行一次）
         private void InitializePointCloudActor()
         {
-            // 创建核心对象（只创建一次）
             pointCloudPoints = vtkPoints.New();
-            pointCloudScalars = vtkFloatArray.New();
+            pointCloudColors = vtkUnsignedCharArray.New();
+            pointCloudColors.SetNumberOfComponents(3);
+            pointCloudColors.SetName("Colors");
             pointCloudData = vtkPolyData.New();
-            pointCloudLookupTable = vtkLookupTable.New();
             pointCloudMapper = vtkPolyDataMapper.New();
-            var glyphFilter = vtkVertexGlyphFilter.New();
+            pointCloudGlyphFilter = vtkVertexGlyphFilter.New();
 
-            // 构建管线
             pointCloudData.SetPoints(pointCloudPoints);
-            pointCloudData.GetPointData().SetScalars(pointCloudScalars);
+            pointCloudData.GetPointData().SetScalars(pointCloudColors);
 
-            glyphFilter.SetInputConnection(pointCloudData.GetProducerPort());
-            pointCloudMapper.SetInputConnection(glyphFilter.GetOutputPort());
+            pointCloudGlyphFilter.SetInputConnection(pointCloudData.GetProducerPort());
+            pointCloudMapper.SetInputConnection(pointCloudGlyphFilter.GetOutputPort());
+            pointCloudMapper.SetColorMode(0); // 直接使用RGB颜色
 
-            // ✅ 根据配置设置颜色方案（关键！）
-            if (SystemSetting.Default_Color)
-            {
-                // 默认彩虹渐变（紫->红）
-                pointCloudLookupTable.SetHueRange(0.67, 0);
-                pointCloudLookupTable.Build();
-            }
-            else
-            {
-                // ✅ 自定义方案：初始化时不设置颜色（由UpdatePointCloudData每帧设置）
-                pointCloudLookupTable.SetNumberOfColors(1); // 临时
-                pointCloudLookupTable.Build();
-            }
-
-            pointCloudMapper.SetLookupTable(pointCloudLookupTable);
-
-            // 创建Actor
             pointCloudActor = vtkActor.New();
             pointCloudActor.SetMapper(pointCloudMapper);
             pointCloudActor.GetProperty().SetPointSize(SystemSetting.PointSize);
 
-            // 关键：应用全局变换
             if (SystemSetting.NonUniformScale)
                 pointCloudActor.SetUserTransform(SystemSetting.GlobalTransform);
             firstRenderer.AddActor(pointCloudActor);
-
-            // 清理临时对象
-            glyphFilter.Dispose();
-
         }
 
 
 
-        /// <summary>
-        /// 设置自定义颜色表（7个颜色档位，完全匹配原始代码）
-        /// </summary>
-        private void SetupCustomColorTable()
-        {
-            // 清除旧颜色
-            pointCloudLookupTable.SetNumberOfColors(7);
-
-            // 按Z值从高到低分配颜色索引：
-            // 索引0: 红色 (最高)
-            // 索引1: 橙色
-            // 索引2: 黄色
-            // 索引3: 绿色
-            // 索引4: 青色
-            // 索引5: 蓝色
-            // 索引6: 紫色 (最低)
-
-            pointCloudLookupTable.SetTableValue(0, 1.0, 0.0, 0.0, 1.0);   // 红
-            pointCloudLookupTable.SetTableValue(1, 1.0, 0.6, 0.0, 1.0);   // 橙
-            pointCloudLookupTable.SetTableValue(2, 1.0, 1.0, 0.0, 1.0);   // 黄
-            pointCloudLookupTable.SetTableValue(3, 0.0, 1.0, 0.0, 1.0);   // 绿
-            pointCloudLookupTable.SetTableValue(4, 0.0, 1.0, 1.0, 1.0);   // 青
-            pointCloudLookupTable.SetTableValue(5, 0.0, 0.0, 1.0, 1.0);   // 蓝
-            pointCloudLookupTable.SetTableValue(6, 0.5, 0.0, 0.5, 1.0);   // 紫
-
-            pointCloudLookupTable.Build();
-        }
-
-        /// <summary>
-        /// 更新点云数据并重新映射颜色
-        /// </summary>
         private void UpdatePointCloudData(List<TargetInfo.RadarTargetInfoStruct> pointData)
         {
             pointCloudPoints.Reset();
-            pointCloudScalars.Reset();
-            // 根据配置选择颜色方案
+            pointCloudColors.Reset();
+
             if (SystemSetting.Default_Color)
             {
-                // 默认方案：使用Z值作为标量，彩虹渐变
+                double zMin = double.MaxValue, zMax = double.MinValue;
                 foreach (var point in pointData)
                 {
                     pointCloudPoints.InsertNextPoint(point.XAxis, point.YAxis, point.ZAxis);
-                    pointCloudScalars.InsertNextTuple1(point.ZAxis);
+                    if (point.ZAxis < zMin) zMin = point.ZAxis;
+                    if (point.ZAxis > zMax) zMax = point.ZAxis;
                 }
+                double zRange = zMax - zMin;
+                if (zRange < 0.001) zRange = 1.0;
 
-                // 重建渐变颜色表
-                pointCloudLookupTable.SetNumberOfColors(256);
-                pointCloudLookupTable.SetHueRange(0.67, 0); // 紫->红
-                pointCloudLookupTable.Build();
-
-                // 设置标量范围（Z轴范围）
-                double[] bounds = pointCloudData.GetBounds();
-                pointCloudMapper.SetScalarRange(bounds[4], bounds[5]);
+                for (int i = 0; i < pointData.Count; i++)
+                {
+                    double z = pointData[i].ZAxis;
+                    double t = (z - zMin) / zRange; // 0~1
+                    double hue = 0.67 * (1.0 - t); // 紫(0.67) -> 红(0)
+                    HsvToRgb(hue, 1.0, 1.0, out byte r, out byte g, out byte b);
+                    pointCloudColors.InsertNextTuple3(r, g, b);
+                }
             }
             else
             {
-                // ✅ 自定义方案：完全复制原始代码逻辑（每帧重建LookupTable）
-                int pointCount = pointData.Count;
-                pointCloudLookupTable.SetNumberOfColors(pointCount);
-
-                for (int i = 0; i < pointCount; i++)
+                foreach (var point in pointData)
                 {
-                    var point = pointData[i];
                     pointCloudPoints.InsertNextPoint(point.XAxis, point.YAxis, point.ZAxis);
-
-                    // 标量值是索引（关键！）
-                    pointCloudScalars.InsertNextTuple1(i);
-
-                    // 根据Z值设置该索引对应的颜色（动态响应阈值变化！）
                     double z = point.ZAxis;
                     if (z > SystemSetting.RedValue)
-                        pointCloudLookupTable.SetTableValue(i, 1.0, 0.0, 0.0, 1.0);      // 红
+                        pointCloudColors.InsertNextTuple3(255, 0, 0);
                     else if (z <= SystemSetting.RedValue && z > SystemSetting.OrangeValue)
-                        pointCloudLookupTable.SetTableValue(i, 1.0, 0.6, 0.0, 1.0);     // 橙
+                        pointCloudColors.InsertNextTuple3(255, 153, 0);
                     else if (z <= SystemSetting.OrangeValue && z > SystemSetting.YellowValue)
-                        pointCloudLookupTable.SetTableValue(i, 1.0, 1.0, 0.0, 1.0);     // 黄
+                        pointCloudColors.InsertNextTuple3(255, 255, 0);
                     else if (z <= SystemSetting.YellowValue && z > SystemSetting.GreenValue)
-                        pointCloudLookupTable.SetTableValue(i, 0.0, 1.0, 0.0, 1.0);     // 绿
+                        pointCloudColors.InsertNextTuple3(0, 255, 0);
                     else if (z <= SystemSetting.GreenValue && z > SystemSetting.CyanValue)
-                        pointCloudLookupTable.SetTableValue(i, 0.0, 1.0, 1.0, 1.0);     // 青
+                        pointCloudColors.InsertNextTuple3(0, 255, 255);
                     else if (z <= SystemSetting.CyanValue && z > SystemSetting.BlueValue)
-                        pointCloudLookupTable.SetTableValue(i, 0.0, 0.0, 1.0, 1.0);     // 蓝
+                        pointCloudColors.InsertNextTuple3(0, 0, 255);
                     else
-                        pointCloudLookupTable.SetTableValue(i, 0.5, 0.0, 0.5, 1.0);     // 紫
+                        pointCloudColors.InsertNextTuple3(128, 0, 128);
                 }
-
-                pointCloudLookupTable.Build();
-                pointCloudMapper.SetScalarRange(0, pointCount - 1);
             }
 
             pointCloudData.Modified();
+        }
+
+        private static void HsvToRgb(double h, double s, double v, out byte r, out byte g, out byte b)
+        {
+            int hi = (int)(h * 6.0) % 6;
+            double f = h * 6.0 - (int)(h * 6.0);
+            double p = v * (1.0 - s);
+            double q = v * (1.0 - f * s);
+            double t = v * (1.0 - (1.0 - f) * s);
+            double dr, dg, db;
+            switch (hi)
+            {
+                case 0: dr = v; dg = t; db = p; break;
+                case 1: dr = q; dg = v; db = p; break;
+                case 2: dr = p; dg = v; db = t; break;
+                case 3: dr = p; dg = q; db = v; break;
+                case 4: dr = t; dg = p; db = v; break;
+                default: dr = v; dg = p; db = q; break;
+            }
+            r = (byte)(dr * 255.0);
+            g = (byte)(dg * 255.0);
+            b = (byte)(db * 255.0);
         }
 
         // 清理点云
@@ -1193,29 +1206,33 @@ namespace UCM_Tools.Forms
                 pointCloudPoints.Dispose();
                 pointCloudPoints = null;
             }
-            if (pointCloudLookupTable != null)
+            if (pointCloudColors != null)
             {
-                pointCloudLookupTable.Dispose();
-                pointCloudLookupTable = null;
+                pointCloudColors.Dispose();
+                pointCloudColors = null;
+            }
+            if (pointCloudGlyphFilter != null)
+            {
+                pointCloudGlyphFilter.Dispose();
+                pointCloudGlyphFilter = null;
             }
             ClearTextActors();
         }
 
-        // 同步清理文本（关键！）
+        // 同步清理文本（使用可见性切换，不从渲染器移除）
         private void ClearTextActors()
         {
-            // 清理3D文本
             foreach (var actor in active3DTextActors)
             {
-                firstRenderer.RemoveViewProp(actor);
-                // 回收到对象池
+                actor.SetVisibility(0);
+                actor.SetInput("");
                 ReturnTextActorToPool(actor);
             }
             active3DTextActors.Clear();
-            // 清理2D文本
             foreach (var actor in active2DTextActors)
             {
-                firstRenderer.RemoveViewProp(actor);
+                actor.SetVisibility(0);
+                actor.SetInput("");
                 ReturnTextActorToPool(actor);
             }
             active2DTextActors.Clear();
@@ -1226,7 +1243,6 @@ namespace UCM_Tools.Forms
         /// </summary>
         private void Add2DTextBatch(List<TargetInfo.RadarTargetInfoStruct> pointData)
         {
-            // 限制数量避免UI过载
             int maxTexts = SystemSetting.Max2DTextCount > 0 ?
                 Math.Min(pointData.Count, SystemSetting.Max2DTextCount) :
                 pointData.Count;
@@ -1234,70 +1250,54 @@ namespace UCM_Tools.Forms
             for (int i = 0; i < maxTexts; i++)
             {
                 var actor = Get2DTextActor(pointData[i]);
-                // 对2D文本，使用变换后的坐标计算屏幕位置
                 if (SystemSetting.NonUniformScale)
                 {
                     double[] transformedPos = SystemSetting.TransformPoint(pointData[i].XAxis, pointData[i].YAxis, pointData[i].ZAxis);
                     int[] screenPos = WorldToScreenCoordinates(transformedPos[0], transformedPos[1], transformedPos[2]);
                     actor.SetDisplayPosition(screenPos[0], screenPos[1]);
                 }
-                firstRenderer.AddActor2D(actor); // ✅ 注意：使用AddActor2D而不是AddActor
+                actor.SetVisibility(1);
                 active2DTextActors.Add(actor);
             }
         }
 
-        /// <summary>
-        /// 获取/创建2D文本Actor（固定字体大小，远近一致）
-        /// </summary>
         private vtkTextActor Get2DTextActor(TargetInfo.RadarTargetInfoStruct tar)
         {
             vtkTextActor actor;
             lock (text2DActorPool)
             {
-                actor = text2DActorPool.Count > 0 ? text2DActorPool.Dequeue() : vtkTextActor.New();
+                actor = text2DActorPool.Count > 0 ? text2DActorPool.Dequeue() : null;
             }
-
-            // 配置文本属性（只设置一次）
-            var textProperty = actor.GetTextProperty();
-            if (textProperty == null)
+            if (actor == null)
             {
-                textProperty = vtkTextProperty.New();
+                actor = vtkTextActor.New();
+                var textProperty = vtkTextProperty.New();
                 actor.SetTextProperty(textProperty);
-                textProperty.Dispose(); // VTK会内部引用，可立即释放
+                textProperty.Dispose();
+                actor.GetTextProperty().SetColor(1.0, 1.0, 1.0);
+                firstRenderer.AddActor2D(actor); // 仅新建时添加一次
             }
 
-            // 设置内容
             actor.SetInput(VTKHelper.GetDetectionText(tar));
-
-            // 计算屏幕坐标
             int[] screenPos = WorldToScreenCoordinates(tar.XAxis, tar.YAxis, tar.ZAxis);
             actor.SetDisplayPosition(screenPos[0], screenPos[1]);
 
-            // 固定字体大小，远近一致
             int fontSize = SystemSetting.Text2DFontSize;
             if (fontSize <= 0) fontSize = 14;
             actor.GetTextProperty().SetFontSize(fontSize);
 
-            // 设置颜色
-            textProperty.SetColor(1.0, 1.0, 1.0); // 白色
-
             return actor;
         }
-        /// <summary>
-        /// 世界坐标转屏幕像素坐标（正确实现）
-        /// </summary>
         private int[] WorldToScreenCoordinates(double worldX, double worldY, double worldZ)
         {
-            using (vtkCoordinate coordinate = vtkCoordinate.New())
-            {
-                coordinate.SetCoordinateSystemToWorld();
-                coordinate.SetValue(worldX, worldY, worldZ);
-                coordinate.SetViewport(firstRenderer);
-
-                // 直接返回 [screenX, screenY]
-                return coordinate.GetComputedDisplayValue(firstRenderer);
-            }
+            if (cachedCoordinate == null)
+                cachedCoordinate = vtkCoordinate.New();
+            cachedCoordinate.SetCoordinateSystemToWorld();
+            cachedCoordinate.SetValue(worldX, worldY, worldZ);
+            cachedCoordinate.SetViewport(firstRenderer);
+            return cachedCoordinate.GetComputedDisplayValue(firstRenderer);
         }
+
         /// <summary>
         /// .NET Framework兼容的Clamp实现
         /// </summary>
@@ -1310,31 +1310,32 @@ namespace UCM_Tools.Forms
         /// </summary>
         private double CalculateDistanceToCamera(double x, double y, double z)
         {
-            double[] cameraPos = firstRenderer.GetActiveCamera().GetPosition();
-            double dx = x - cameraPos[0];
-            double dy = y - cameraPos[1];
-            double dz = z - cameraPos[2];
-            return Math.Max(0.1, Math.Sqrt(dx * dx + dy * dy + dz * dz)); // 避免除零
+            double dx = x - cachedCameraPos[0];
+            double dy = y - cachedCameraPos[1];
+            double dz = z - cachedCameraPos[2];
+            return Math.Max(0.1, Math.Sqrt(dx * dx + dy * dy + dz * dz));
         }
 
         private void ReturnTextActorToPool(vtkTextActor actor)
         {
             if (!SystemSetting.EnableVtkObjectPool)
             {
+                firstRenderer.RemoveViewProp(actor);
                 actor.Dispose();
                 return;
             }
 
             lock (text2DActorPool)
             {
-                if (text2DActorPool.Count < 200) // 2D文本池更大
+                if (text2DActorPool.Count < 200)
                 {
                     actor.SetInput("");
-                    actor.SetDisplayPosition(0, 0); // 复位
+                    actor.SetDisplayPosition(0, 0);
                     text2DActorPool.Enqueue(actor);
                     return;
                 }
             }
+            firstRenderer.RemoveViewProp(actor);
             actor.Dispose();
         }
         #endregion 2D文字
@@ -1342,18 +1343,16 @@ namespace UCM_Tools.Forms
         #region 3D文字
         private void Add3DTextBatch(List<TargetInfo.RadarTargetInfoStruct> pointData)
         {
-            // 严格限制3D文本数量（超过15个性能急剧下降）
             int maxTexts = SystemSetting.Max3DTextCount > 0 ?
                 Math.Min(pointData.Count, SystemSetting.Max3DTextCount) :
-                Math.Min(pointData.Count, 15); // 强制上限
+                Math.Min(pointData.Count, 15);
 
             for (int i = 0; i < maxTexts; i++)
             {
                 var actor = Get3DTextActor(pointData[i]);
-                // 关键：应用全局变换
                 if (SystemSetting.NonUniformScale)
                     actor.SetUserTransform(SystemSetting.GlobalTransform);
-                firstRenderer.AddActor(actor);
+                actor.SetVisibility(1);
                 active3DTextActors.Add(actor);
             }
         }
@@ -1363,14 +1362,19 @@ namespace UCM_Tools.Forms
             vtkTextActor3D actor;
             lock (text3DActorPool)
             {
-                actor = text3DActorPool.Count > 0 ? text3DActorPool.Dequeue() : vtkTextActor3D.New();
+                actor = text3DActorPool.Count > 0 ? text3DActorPool.Dequeue() : null;
+            }
+            if (actor == null)
+            {
+                actor = vtkTextActor3D.New();
+                firstRenderer.AddActor(actor); // 仅新建时添加一次
             }
 
             var textProperty = vtkTextProperty.New();
             VTKHelper.SetTextProperty(textProperty);
             actor.SetInput(VTKHelper.GetDetectionText(tar));
             actor.SetTextProperty(textProperty);
-            actor.SetPosition(tar.XAxis, tar.YAxis, tar.ZAxis + 0.5); // Z轴抬高避免穿透
+            actor.SetPosition(tar.XAxis, tar.YAxis, tar.ZAxis + 0.5);
             actor.SetScale(0.03, 0.03, 0.03);
             actor.RotateX(90.0);
 
@@ -1380,21 +1384,23 @@ namespace UCM_Tools.Forms
         // 回收TextActor到对象池
         private void ReturnTextActorToPool(vtkTextActor3D actor)
         {
-            if (!SystemSetting.EnableVtkObjectPool) // 检查配置
+            if (!SystemSetting.EnableVtkObjectPool)
             {
+                firstRenderer.RemoveViewProp(actor);
                 actor.Dispose();
                 return;
             }
             lock (text3DActorPool)
             {
-                if (text3DActorPool.Count < 200) // 限制池大小
+                if (text3DActorPool.Count < 200)
                 {
-                    actor.SetInput(""); // 清空内容
+                    actor.SetInput("");
                     text3DActorPool.Enqueue(actor);
                     return;
                 }
             }
-            actor.Dispose(); // 池满则销毁
+            firstRenderer.RemoveViewProp(actor);
+            actor.Dispose();
         }
         #endregion 3D文字
 
@@ -1500,23 +1506,14 @@ namespace UCM_Tools.Forms
             }
             else if (m.Msg == 0x001C)
             {
-                // 应用程序激活/失去焦点时切换渲染模式
-                if (renderWindow != null)
+                // 失去/恢复焦点时只做帧率节流，不切换渲染模式
+                if (m.WParam.ToInt32() == 0)
                 {
-                    if (m.WParam.ToInt32() == 0) // 失去焦点
-                    {
-                        isLostFocus = true;
-                        Console.WriteLine("失去焦点");
-                        renderWindow.SetOffScreenRendering(1);
-                    }
-                    else // 恢复焦点
-                    {
-                        isLostFocus = false;
-                        Console.WriteLine("恢复焦点");
-                        renderWindow.SetOffScreenRendering(0);
-                        renderWindow.Modified();
-                        renderWindow.MakeCurrent();
-                    }
+                    isLostFocus = true;
+                }
+                else
+                {
+                    isLostFocus = false;
                 }
             }
             base.WndProc(ref m);
@@ -1576,28 +1573,33 @@ namespace UCM_Tools.Forms
                 saveDataPointTrack?.Dispose();
                 saveDataPointTrack = null;
             }
-            targetFrameTemp.Add(clusterInfoList);
-            targetTemp.Clear();
-            foreach (var item in targetFrameTemp)
-                targetTemp.AddRange(item);
-            List<TargetInfo.RadarTargetInfoStruct> LoadTemp = targetTemp.ToList();
-            List<TargetInfo.RadarTargetInfoStruct> TrackTemp = targetInfoList.ToList();
-            if (targetFrameTemp.Count >= SystemSetting.CumulativeFrameNum)
+            List<TargetInfo.RadarTargetInfoStruct> LoadTemp;
+            if (SystemSetting.CumulativeFrameNum <= 1)
             {
-
-                if (SystemSetting.CumulativeFrameType == 1)//每显示cumulativeFrameSum帧数据清空再积累
+                LoadTemp = clusterInfoList;
+            }
+            else
+            {
+                targetFrameTemp.Add(clusterInfoList);
+                targetTemp.Clear();
+                foreach (var item in targetFrameTemp)
+                    targetTemp.AddRange(item);
+                LoadTemp = new List<TargetInfo.RadarTargetInfoStruct>(targetTemp);
+                if (targetFrameTemp.Count >= SystemSetting.CumulativeFrameNum)
                 {
-                    targetFrameTemp.Clear();
-                }
-                else//if(SystemSetting.CumulativeFrameType == 0)//cumulativeFrameSum帧数据保留积累最新cumulativeFrameSum
-                {
-                    int removeNum = targetFrameTemp.Count - SystemSetting.CumulativeFrameNum;
-                    if (removeNum > 0)
-                        targetFrameTemp.RemoveRange(0, removeNum + 1);
-                    else if (removeNum == 0)
-                        targetFrameTemp.RemoveAt(0);
+                    if (SystemSetting.CumulativeFrameType == 1)
+                        targetFrameTemp.Clear();
+                    else
+                    {
+                        int removeNum = targetFrameTemp.Count - SystemSetting.CumulativeFrameNum;
+                        if (removeNum > 0)
+                            targetFrameTemp.RemoveRange(0, removeNum + 1);
+                        else if (removeNum == 0)
+                            targetFrameTemp.RemoveAt(0);
+                    }
                 }
             }
+            List<TargetInfo.RadarTargetInfoStruct> TrackTemp = targetInfoList;
             UpdateLabels(clusterInfoList.Count, LoadTemp.Count, tarNum);
             lock (trajectoryLock)
             {
@@ -1803,70 +1805,90 @@ namespace UCM_Tools.Forms
 
         private void AddTrack2DTextBatch(List<TargetInfo.RadarTargetInfoStruct> trackData)
         {
-            // 跟踪目标数量通常较少，全部显示
-            foreach (var target in trackData)
+            int maxTexts = SystemSetting.Max2DTextCount > 0
+                ? Math.Min(trackData.Count, SystemSetting.Max2DTextCount)
+                : trackData.Count;
+
+            var sorted = maxTexts < trackData.Count
+                ? trackData.OrderBy(t =>
+                {
+                    double dx = t.XAxis - cachedCameraPos[0];
+                    double dy = t.YAxis - cachedCameraPos[1];
+                    double dz = t.ZAxis - cachedCameraPos[2];
+                    return dx * dx + dy * dy + dz * dz;
+                }).Take(maxTexts)
+                : (IEnumerable<TargetInfo.RadarTargetInfoStruct>)trackData;
+
+            foreach (var target in sorted)
             {
                 var actor = GetTrack2DTextActor(target);
-                // 2D文本手动计算变换后位置
+                if (actor == null) continue;
                 if (SystemSetting.NonUniformScale)
                 {
                     double[] transformedPos = SystemSetting.TransformPoint(target.XAxis, target.YAxis, target.ZAxis);
                     int[] screenPos = WorldToScreenCoordinates(transformedPos[0], transformedPos[1], transformedPos[2]);
                     actor.SetDisplayPosition(screenPos[0], screenPos[1] + 15);
                 }
-                firstRenderer.AddActor2D(actor);
+                actor.SetVisibility(1);
                 activeTrack2DTextActors.Add(actor);
             }
         }
 
         private void AddTrack3DTextBatch(List<TargetInfo.RadarTargetInfoStruct> trackData)
         {
-            foreach (var target in trackData)
+            int maxTexts = SystemSetting.Max3DTextCount > 0
+                ? Math.Min(trackData.Count, SystemSetting.Max3DTextCount)
+                : trackData.Count;
+
+            var sorted = maxTexts < trackData.Count
+                ? trackData.OrderBy(t =>
+                {
+                    double dx = t.XAxis - cachedCameraPos[0];
+                    double dy = t.YAxis - cachedCameraPos[1];
+                    double dz = t.ZAxis - cachedCameraPos[2];
+                    return dx * dx + dy * dy + dz * dz;
+                }).Take(maxTexts)
+                : (IEnumerable<TargetInfo.RadarTargetInfoStruct>)trackData;
+
+            foreach (var target in sorted)
             {
                 var actor = GetTrack3DTextActor(target);
-                // 应用全局变换
                 if (SystemSetting.NonUniformScale)
                     actor.SetUserTransform(SystemSetting.GlobalTransform);
-                firstRenderer.AddActor(actor);
+                actor.SetVisibility(1);
                 activeTrack3DTextActors.Add(actor);
             }
         }
 
-        /// <summary>
-        /// 获取跟踪目标2D文本 - 强制显示ID+坐标
-        /// </summary>
         private vtkTextActor GetTrack2DTextActor(TargetInfo.RadarTargetInfoStruct tar)
         {
             vtkTextActor actor;
             lock (trackText2DActorPool)
             {
-                actor = trackText2DActorPool.Count > 0 ? trackText2DActorPool.Dequeue() : vtkTextActor.New();
+                actor = trackText2DActorPool.Count > 0 ? trackText2DActorPool.Dequeue() : null;
             }
-
-            var textProperty = actor.GetTextProperty() ?? vtkTextProperty.New();
-            if (actor.GetTextProperty() == null)
+            if (actor == null)
             {
+                actor = vtkTextActor.New();
+                var textProperty = vtkTextProperty.New();
                 actor.SetTextProperty(textProperty);
-                // 跟踪目标文字使用黄色突出显示
-                textProperty.SetColor(1.0, 1.0, 0.0); // 黄色
+                textProperty.SetColor(SystemSetting.TrackTextColor.R / 255d, SystemSetting.TrackTextColor.G / 255d, SystemSetting.TrackTextColor.B / 255d);
                 textProperty.SetBold(1);
-                // 黑色描边增强可读性
-                textProperty.SetShadow(1);
-                textProperty.SetShadowOffset(1, 1);
-                //textProperty.SetShadowColor(0, 0, 0);
+                textProperty.SetFontSize(12);
                 textProperty.Dispose();
+                firstRenderer.AddActor2D(actor);
             }
-            actor.SetInput(VTKHelper.GetDetectionTextH(tar));
-            // 计算球体顶部的世界坐标（球体半径0.3，顶部在Z+0.3处）
-            //double sphereTopZ = tar.ZAxis + SystemSetting.TrackSize + 0.5; // 球体半径 + 额外偏移
-            // 计算屏幕坐标
+            string text = VTKHelper.GetDetectionTextH(tar);
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                // 空文本会导致VTK FreeType报错，不显示
+                actor.SetVisibility(0);
+                ReturnTrackTextActorToPool(actor);
+                return null;
+            }
+            actor.SetInput(text);
             int[] screenPos = WorldToScreenCoordinates(tar.XAxis, tar.YAxis, tar.ZAxis);
-
-            // 文字偏移避免遮挡球体
             actor.SetDisplayPosition(screenPos[0], screenPos[1] + 15);
-            actor.GetTextProperty().SetFontSize(12);
-
-
             return actor;
         }
         /// <summary>
@@ -1897,37 +1919,33 @@ namespace UCM_Tools.Forms
             int fs = actor.GetTextProperty().GetFontSize();
             return new int[] { (int)(txt.Length * fs * 0.6), fs };
         }
-        /// <summary>
-        /// 获取跟踪目标3D文本
-        /// </summary>
         private vtkTextActor3D GetTrack3DTextActor(TargetInfo.RadarTargetInfoStruct tar)
         {
             vtkTextActor3D actor;
             lock (trackText3DActorPool)
             {
-                actor = trackText3DActorPool.Count > 0 ? trackText3DActorPool.Dequeue() : vtkTextActor3D.New();
+                actor = trackText3DActorPool.Count > 0 ? trackText3DActorPool.Dequeue() : null;
+            }
+            if (actor == null)
+            {
+                actor = vtkTextActor3D.New();
+                firstRenderer.AddActor(actor); // 仅新建时添加一次
             }
 
             var textProperty = vtkTextProperty.New();
-            //textProperty.SetColor(1.0, 1.0, 0.0); // 黄色
             textProperty.SetColor(SystemSetting.TrackTextColor.R / 255d, SystemSetting.TrackTextColor.G / 255d, SystemSetting.TrackTextColor.B / 255d);
             textProperty.SetFontSize(SystemSetting.TrackTextSize);
             textProperty.SetBold(1);
-            textProperty.SetJustificationToCentered(); // 3D文本水平居中
+            textProperty.SetJustificationToCentered();
 
-            string text = VTKHelper.GetDetectionTextH(tar);// $"ID:{tar.ID} X:{tar.XAxis:F3} Y:{tar.YAxis:F3} Z:{tar.ZAxis:F3}";
+            string text = VTKHelper.GetDetectionTextH(tar);
             actor.SetInput(text);
             actor.SetTextProperty(textProperty);
-            // 关键：估算文本宽度并偏移X位置
-            // 字体大小25，每个字符约0.6倍宽度，缩放0.04
-            double approxCharWidth = 25 * 0.6 * 0.04; // ≈ 0.6
+            double approxCharWidth = 25 * 0.6 * 0.04;
             double textWidth = text.Length * approxCharWidth;
-            // 位于目标上方
             actor.SetPosition(tar.XAxis - (textWidth / 2), tar.YAxis + (SystemSetting.TrackSize), tar.ZAxis);
             actor.SetScale(0.04, 0.04, 0.04);
-            // 始终面向相机
             actor.SetOrientation(0, 0, 0);
-            //actor.SetUseBounds(true);// 使用边界对齐实现居中
 
             textProperty.Dispose();
             return actor;
@@ -1938,18 +1956,16 @@ namespace UCM_Tools.Forms
         /// </summary>
         private void ClearTrackTextActors()
         {
-            // 3D
             foreach (var actor in activeTrack3DTextActors)
             {
-                firstRenderer.RemoveViewProp(actor);
+                actor.SetVisibility(0);
                 ReturnTrackTextActorToPool(actor);
             }
             activeTrack3DTextActors.Clear();
 
-            // 2D
             foreach (var actor in activeTrack2DTextActors)
             {
-                firstRenderer.RemoveViewProp(actor);
+                actor.SetVisibility(0);
                 ReturnTrackTextActorToPool(actor);
             }
             activeTrack2DTextActors.Clear();
@@ -1959,6 +1975,7 @@ namespace UCM_Tools.Forms
         {
             if (!SystemSetting.EnableVtkObjectPool)
             {
+                firstRenderer.RemoveViewProp(actor);
                 actor.Dispose();
                 return;
             }
@@ -1971,6 +1988,7 @@ namespace UCM_Tools.Forms
                     return;
                 }
             }
+            firstRenderer.RemoveViewProp(actor);
             actor.Dispose();
         }
 
@@ -1978,6 +1996,7 @@ namespace UCM_Tools.Forms
         {
             if (!SystemSetting.EnableVtkObjectPool)
             {
+                firstRenderer.RemoveViewProp(actor);
                 actor.Dispose();
                 return;
             }
@@ -1991,6 +2010,7 @@ namespace UCM_Tools.Forms
                     return;
                 }
             }
+            firstRenderer.RemoveViewProp(actor);
             actor.Dispose();
         }
         #endregion 跟踪目标文字
@@ -2139,35 +2159,23 @@ namespace UCM_Tools.Forms
                 trajectoryData?.Modified();
             }
         }
-        /// <summary>
-        /// 更新轨迹数据 - 高性能批量更新
-        /// </summary>
         private void UpdateTrajectoryData()
         {
             if (!SystemSetting.DisplayTrackTrajectory)
             {
-                // 清空轨迹显示但不销毁Actor
-                //trajectoryPoints.Reset();
-                //trajectoryLines.Reset();
-                //trajectoryColors?.Reset();
-                //trajectoryData.Modified();
                 ClearTrajectoryData();
                 return;
             }
             lock (trajectoryLock)
             {
-                
                 if (trajectoryActor.GetProperty().GetLineWidth() != SystemSetting.TrackTrajectoryLineWidth)
                     trajectoryActor.GetProperty().SetLineWidth(SystemSetting.TrackTrajectoryLineWidth);
-                
-                // 3. 批量构建VTK数据（关键性能优化：一次性重建）
+
                 trajectoryPoints.Reset();
                 trajectoryLines.Reset();
-                //trajectoryColors?.Reset(); // 清空颜色数组
-                // 3. 关键修改：根据当前模式处理颜色数组
+
                 if (SystemSetting.TrackColorMode == 1)
                 {
-                    // Mode=1：确保颜色数组存在并重置
                     if (trajectoryColors == null)
                     {
                         trajectoryColors = vtkUnsignedCharArray.New();
@@ -2178,65 +2186,41 @@ namespace UCM_Tools.Forms
                 }
                 else
                 {
-                    // Mode=0：清除CellData中的标量（防止Mapper尝试读取）
                     trajectoryData.GetCellData().SetScalars(null);
                 }
 
-                foreach (var kvp in trackTrajectories)
+                using (vtkIdList idList = vtkIdList.New())
                 {
-                    var queue = kvp.Value;
-                    if (queue.Count < 2) continue; // 至少需要2个点才能画线
-
-                    var points = queue.ToArray();
-                    int startIdx = trajectoryPoints.GetNumberOfPoints();
-
-                    // 添加所有点到vtkPoints
-                    for (int i = 0; i < points.Length; i++)
+                    foreach (var kvp in trackTrajectories)
                     {
-                        trajectoryPoints.InsertNextPoint(points[i].XAxis, points[i].YAxis, points[i].ZAxis);
-                    }
-                    // 创建线条Cell
-                    using (vtkIdList idList = vtkIdList.New())
-                    {
-                        idList.SetNumberOfIds(points.Length);
-                        for (int i = 0; i < points.Length; i++)
+                        var queue = kvp.Value;
+                        if (queue.Count < 2) continue;
+
+                        int startIdx = trajectoryPoints.GetNumberOfPoints();
+                        int count = 0;
+                        foreach (var pt in queue)
                         {
-                            idList.SetId(i, startIdx + i);
+                            trajectoryPoints.InsertNextPoint(pt.XAxis, pt.YAxis, pt.ZAxis);
+                            count++;
                         }
+                        idList.SetNumberOfIds(count);
+                        for (int i = 0; i < count; i++)
+                            idList.SetId(i, startIdx + i);
                         trajectoryLines.InsertNextCell(idList);
 
-                        // 关键修改：只在Mode=1时添加颜色，且直接操作trajectoryColors
                         if (SystemSetting.TrackColorMode == 1 && trajectoryColors != null)
                         {
                             PubClass.GetColorById(kvp.Key, out byte r, out byte g, out byte b);
                             trajectoryColors.InsertNextTuple3(r, g, b);
                         }
                     }
-
-
-                    //创建线条连接（使用VTK_LINE类型，每段一个cell）
-                    //for (int i = 0; i < points.Length - 1; i++)
-                    //{
-                    //    //vtkLine line = vtkLine.New();
-                    //    //line.GetPointIds().SetId(0, startIdx + i);
-                    //    //line.GetPointIds().SetId(1, startIdx + i + 1);
-                    //    //trajectoryLines.InsertNextCell(line);
-                    //    //line.Dispose(); // 立即释放临时对象
-                    //    // ID着色模式：为每条线段添加颜色（与跟踪点同色）
-                    //    if (SystemSetting.TrackColorMode == 1 && trajectoryColors != null)
-                    //    {
-                    //        trajectoryColors.InsertNextTuple3(r, g, b);
-                    //    }
-                    //}
                 }
-                // 5. 关键修改：更新完成后，根据模式决定是否将颜色数组设置到CellData
+
                 if (SystemSetting.TrackColorMode == 1 && trajectoryColors != null)
                 {
                     trajectoryData.GetCellData().SetScalars(trajectoryColors);
-                    trajectoryMapper.ScalarVisibilityOn(); // 确保开启
+                    trajectoryMapper.ScalarVisibilityOn();
                 }
-                // Mode=0时不需要操作，上面已经清除了
-
             }
 
             trajectoryData.Modified();
@@ -2396,6 +2380,7 @@ namespace UCM_Tools.Forms
                     radar.tarAndClusterPointCloud -= Radar_tarAndClusterPointCloud;
                     radar.pointCloudSaveEvent -= Radar_pointCloudSaveEvent;
                     radar.imuAndGpsSaveEvent -= Radar_imuAndGpsSaveEvent;
+                    radar.connectStatusChangedEvent -= Radar_connectStatusChangedEvent;
                     radar.Stop();
                 }
 

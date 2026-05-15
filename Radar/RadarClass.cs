@@ -102,6 +102,17 @@ namespace UCM_Tools.Radar
                 aliveStatusEvent(alive);
         }
         /// <summary>
+        /// 连接状态变更委托（用于自动重连通知）
+        /// </summary>
+        public delegate void ConnectStatusChangedDelegate(bool isConnected, string message);
+        [method: CompilerGenerated]
+        public event ConnectStatusChangedDelegate connectStatusChangedEvent;
+        public void OnConnectStatusChanged(bool isConnected, string message)
+        {
+            if (connectStatusChangedEvent != null)
+                connectStatusChangedEvent(isConnected, message);
+        }
+        /// <summary>
         /// 数据帧委托
         /// </summary>
         public delegate void FrameDelegate(uint frameId, byte[] frameData);
@@ -197,6 +208,7 @@ namespace UCM_Tools.Radar
             if (!await conn.OpenDevice())
                 return false;
             conn.OnRecvConnDataEvent += Conn_OnRecvConnDataEvent;
+            conn.OnConnectStatusChanged += OnConnectStatusChanged;
             _bOpen = true;
             radarProtcol.cycleDataEvent += RadarProtcol_cycleDataEvent;
             radarProtcol.versionEvent += RadarProtcol_versionEvent;
@@ -333,6 +345,7 @@ namespace UCM_Tools.Radar
             if (conn != null)
             {
                 conn.OnRecvConnDataEvent -= Conn_OnRecvConnDataEvent;
+                conn.OnConnectStatusChanged -= OnConnectStatusChanged;
                 conn.CloseDevice();
             }
             conn = null;

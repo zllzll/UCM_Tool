@@ -33,9 +33,9 @@ namespace UCM_Tools.Radar.Protocols
         private const byte EX_ALOG_DATA_TY1 = 0x3A;
         private double ACC_SCALE = 0.004788;//加速度缩放因子
         private double AV_SCALE = 0.001065;//角速度缩放因子
-        private double GPS_LAT_LONG_SCALE = Math.Pow(Math.E,-7);//GPS经纬度缩放因子
+        private double GPS_LAT_LONG_SCALE = Math.Pow(10,-7);//GPS经纬度缩放因子
         private double GPS_HEIGHT_SCALE = 0.001;//GPS海拔高度缩放因子
-        private double GPS_SPEED_SCALE = 0.001;//GP速度和偏磁角缩放因子
+        private double GPS_SPEED_SCALE = 0.01;//GP速度和偏磁角缩放因子
 
         Thread thread = null;
         bool isHandle = false;
@@ -200,7 +200,7 @@ namespace UCM_Tools.Radar.Protocols
                         byte[] baseData = buff.Skip(4).Take(dataBaseLen).ToArray();
                         int baseIndex = 3;//基础模块信息
                         int dataStatus = baseData[baseIndex] & 0x01;
-                        int dataExtend = baseData[baseIndex] & 0x02;
+                        int dataExtend = (baseData[baseIndex] & 0x02)>> 1;
                         baseIndex++;
                         int TarNum = baseData[baseIndex]; //目标数量
                         baseIndex += 1;
@@ -323,7 +323,7 @@ namespace UCM_Tools.Radar.Protocols
                             }
                             int exAlogBaseLen = BitConverter.ToUInt16(buff, totalIndex + 2);//整个点云信息模块数据长度，包括信息帧头、基本信息、模块数据长度以及校验和
                             byte[] exAlogBaseData = buff.Skip(totalIndex).Take(exAlogBaseLen).ToArray();
-                            if (clusterLenForBaseData != exAlogBaseLen || exAlogBaseData[exAlogBaseLen - 1] != PubClass.GetCheckSum(exAlogBaseData, 0, exAlogBaseLen - 1))
+                            if (ExtendAlogModeLen != exAlogBaseLen || exAlogBaseData[exAlogBaseLen - 1] != PubClass.GetCheckSum(exAlogBaseData, 0, exAlogBaseLen - 1))
                             {
                                 first = Array.IndexOf(buff, HEAD_TY0, first + 1);
                                 if (first < 0)
@@ -427,7 +427,7 @@ namespace UCM_Tools.Radar.Protocols
                     int baseModelLen = bytes[index];
                     index++;
                     int dataStatus = bytes[index] & 0x01;
-                    int dataExtend = bytes[index] & 0x02;
+                    int dataExtend = (bytes[index] & 0x02)>>1;
                     index++;
                     int TarNum = bytes[index];//目标数量
                     index += 1;

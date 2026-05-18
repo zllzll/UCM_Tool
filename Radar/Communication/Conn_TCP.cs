@@ -1,6 +1,4 @@
-﻿using UCM_Tools.CAN_Conn;
-using UCM_Tools.Config;
-using LogProc;
+﻿using LogProc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +6,9 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UCM_Tools.CAN_Conn;
+using UCM_Tools.Config;
+using UCM_Tools.Models;
 using static Kitware.VTK.vtkMultiProcessController;
 
 namespace UCM_Tools.Radar.Communication
@@ -40,7 +41,7 @@ namespace UCM_Tools.Radar.Communication
             if (tcpClient != null)
                 tcpClient.Close();
             tcpClient = null;
-            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? "重连中..." : "已手动断开连接");
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconneting : ConnState.Disconnected);// "重连中..." : "已手动断开连接");
         }
 
         public override async Task<bool> OpenDevice()
@@ -79,28 +80,28 @@ namespace UCM_Tools.Radar.Communication
                 if (await Task.WhenAny(connectedTask, timeoutTask) == timeoutTask)
                 {
                     StartReconnect();
-                    OnConnectStatusChanged?.Invoke(false, "连接超时");
+                    OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                     return false;
                 }
                 await connectedTask;
                 _currentReconnnectCount = 0;
                 _isReconnecting = false;
                 StopReconnect();
-                OnConnectStatusChanged?.Invoke(true, "连接成功");
+                OnConnectStatusChanged?.Invoke(true, ConnState.Connected);
                 StartHeartbeatCheck();
                 return true;
             }
             catch (SocketException ex)
             {
                 Log.Error($"ConnectedQuickly({ip},{port},{timeoutMs}) Ex\r\n{ex.ToString()}");
-                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                 StartReconnect();
                 return false;
             }
             catch (Exception ex)
             {
                 Log.Error($"ConnectedQuickly({ip},{port},{timeoutMs}) Ex\r\n{ex.ToString()}");
-                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                 StartReconnect();
                 return false;
             }
@@ -134,7 +135,7 @@ namespace UCM_Tools.Radar.Communication
                 catch (SocketException)
                 {
                     _connected = false;
-                    OnConnectStatusChanged?.Invoke(false, "连接已断开");
+                    OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                     StartReconnect();
                     break;
                 }
@@ -170,14 +171,14 @@ namespace UCM_Tools.Radar.Communication
             if (_maxReconnectCount != -1 && _currentReconnnectCount >= _maxReconnectCount)
             {
                 _isReconnecting = false;
-                OnConnectStatusChanged?.Invoke(false, "已达到最大重连次数，停止重连");
+                OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected); //"已达到最大重连次数，停止重连");
                 return;
             }
             _isReconnecting = true;
             _reconnectTimer = new Timer(async (state) =>
             {
                 _currentReconnnectCount++;
-                OnConnectStatusChanged?.Invoke(false, $"正在第{_currentReconnnectCount}次重连...");
+                OnConnectStatusChanged?.Invoke(false, ConnState.Reconneting);
                 await OpenDevice();
             }, null, _reconnectIntervalMs, Timeout.Infinite);
         }
@@ -195,7 +196,7 @@ namespace UCM_Tools.Radar.Communication
             {
                 if (!GetConnected())
                 {
-                    OnConnectStatusChanged?.Invoke(false, "连接已断开");
+                    OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                     StartReconnect();
                 }
             }, null, 0, 5000);

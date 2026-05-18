@@ -24,4 +24,13 @@ V1.0.1
 20260207:解决窗体小化导致帧率下降问题；解决轨迹显示导致帧率下降问题；增加CAN通讯；增加UCM211升级功能
 20260318：修复128个跟踪文本实时刷新异常的问题，目前最多160个目标，如果增加跟踪目标，可以尝试增长配置文件中VtkDrawTimeInLostFocus的值（后续还得优化）
 
-B_OtherGrid、TrackTextFixedSize、AxisTextFixedSize
+V1.0.3
+1、增加配置B_OtherGrid，true=绘制XZ和YZ平面
+2、增加跟踪目标文本大小按距离补偿缩放。TrackTextFixedSize=true时补偿，且TrackTextScale、TrackTextRefDistance生效
+3、增加坐标轴刻度值文本大小按距离补偿缩放。AxisTextFixedSize = true时补偿，且AxisTextScale生效；
+4、修复跟踪文本2D绘制方式；//建议使用3D文本，3D文本缩放时会跟着目标位置变化，2D和GDI文本位置不会
+5、增加是否使用GDI文本，UseGdiTextOverlay = true //建议使用3D文本
+6、Text2DFontSize，增加2D文本固定字体大小（像素），设为0表示使用旧版距离衰减模式
+7、TrackTrajectoryIncremental增加轨迹增量渲染：true=每帧只追加新线段（高性能），false=每帧全量重建（旧方案）
+8、RenderIntervalMs增加渲染间隔(ms)：0=每帧渲染，>0=隔N毫秒渲染一次（节省CPU/GPU），推荐200
+9、VtkDrawTimeInLostFocus；在失去焦点时，由于会性能下降，等于0时将其自动变为500ms

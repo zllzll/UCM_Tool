@@ -181,6 +181,12 @@
     <Compile Include="Forms\MainForm.Designer.cs">
       <DependentUpon>MainForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\GPSInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\GPSInfoForm.Designer.cs">
+      <DependentUpon>GPSInfoForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\UpgradeForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -230,7 +236,9 @@
     <Compile Include="Radar\RadarProtcol.cs" />
     <Compile Include="ExtendControls\CustomContextMenuRenderer.cs" />
     <Compile Include="Tools\AlgoDataReplayer.cs" />
+    <Compile Include="ExtendControls\TransparentOverlayPanel.cs" />
     <Compile Include="Tools\DynamicFollowerText3D.cs" />
+    <Compile Include="Tools\GdiTextOverlay.cs" />
     <Compile Include="Tools\NplotCls.cs" />
     <Compile Include="Tools\PointTrackDataReplayer.cs" />
     <Compile Include="Tools\DataReplayer.cs" />
@@ -263,6 +271,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\GPSInfoForm.resx">
+      <DependentUpon>GPSInfoForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\UpgradeForm.resx">
       <DependentUpon>UpgradeForm.cs</DependentUpon>

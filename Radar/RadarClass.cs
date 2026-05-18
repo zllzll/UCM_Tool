@@ -104,10 +104,10 @@ namespace UCM_Tools.Radar
         /// <summary>
         /// 连接状态变更委托（用于自动重连通知）
         /// </summary>
-        public delegate void ConnectStatusChangedDelegate(bool isConnected, string message);
+        public delegate void ConnectStatusChangedDelegate(bool isConnected, ConnState message);
         [method: CompilerGenerated]
         public event ConnectStatusChangedDelegate connectStatusChangedEvent;
-        public void OnConnectStatusChanged(bool isConnected, string message)
+        public void OnConnectStatusChanged(bool isConnected, ConnState message)
         {
             if (connectStatusChangedEvent != null)
                 connectStatusChangedEvent(isConnected, message);

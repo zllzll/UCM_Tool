@@ -357,6 +357,19 @@ namespace UCM_Tools.Config
                 _UseScreenSpaceText = value;
             }
         }
+        private static bool _UseGdiTextOverlay;
+        /// <summary>
+        /// true=GDI+位图叠加文本（推荐，1次draw call），false=VTK原生文本
+        /// </summary>
+        public static bool UseGdiTextOverlay
+        {
+            get { return _UseGdiTextOverlay; }
+            set
+            {
+                ConfigXML.SetKeyValue("UseGdiTextOverlay", value.ToString());
+                _UseGdiTextOverlay = value;
+            }
+        }
         private static int _Max2DTextCount;
         /// <summary>
         /// 2D文本最大显示数量（0=不限制）
@@ -1145,6 +1158,20 @@ namespace UCM_Tools.Config
                 _TrackTextScale = value;
             }
         }
+        private static double _TrackTextRefDistance = 50.0;
+        /// <summary>
+        /// 距离补偿参考距离（默认50米）。仅在 TrackTextFixedSize=true 时生效。
+        /// 目标在此距离时保持 TrackTextScale 对应的视觉大小，更近/更远时等比缩放。
+        /// </summary>
+        public static double TrackTextRefDistance
+        {
+            get { return _TrackTextRefDistance; }
+            set
+            {
+                ConfigXML.SetKeyValue("TrackTextRefDistance", value.ToString());
+                _TrackTextRefDistance = value;
+            }
+        }
         private static int _TrackColorMode = 0; 
         /// <summary>
         /// 跟踪点颜色模式
@@ -1235,6 +1262,32 @@ namespace UCM_Tools.Config
             {
                 ConfigXML.SetKeyValue("TrackTrajectoryTime", value.ToString());
                 _TrackTrajectoryTime = value;
+            }
+        }
+        private static bool _TrackTrajectoryIncremental = true;
+        /// <summary>
+        /// 轨迹增量渲染：true=每帧只追加新线段（高性能），false=每帧全量重建（旧方案）
+        /// </summary>
+        public static bool TrackTrajectoryIncremental
+        {
+            get { return _TrackTrajectoryIncremental; }
+            set
+            {
+                ConfigXML.SetKeyValue("TrackTrajectoryIncremental", value.ToString());
+                _TrackTrajectoryIncremental = value;
+            }
+        }
+        private static int _RenderIntervalMs = 0;
+        /// <summary>
+        /// 渲染间隔(ms)：0=每帧渲染，>0=隔N毫秒渲染一次（节省CPU/GPU）
+        /// </summary>
+        public static int RenderIntervalMs
+        {
+            get { return _RenderIntervalMs; }
+            set
+            {
+                ConfigXML.SetKeyValue("RenderIntervalMs", value.ToString());
+                _RenderIntervalMs = value;
             }
         }
         #endregion 跟踪轨迹相关参数
@@ -1359,6 +1412,7 @@ namespace UCM_Tools.Config
                 #endregion 颜色匹配高度
                 #region 文本配置
                 _UseScreenSpaceText = bool.Parse(ConfigXML.GetKeyString("UseScreenSpaceText", "false"));
+                _UseGdiTextOverlay = bool.Parse(ConfigXML.GetKeyString("UseGdiTextOverlay", "true"));
                 _EnableVtkObjectPool = bool.Parse(ConfigXML.GetKeyString("EnableVtkObjectPool", "false"));
                 _Max2DTextCount = int.Parse(ConfigXML.GetKeyString("Max2DTextCount", "10"));
                 _Max3DTextCount = int.Parse(ConfigXML.GetKeyString("Max3DTextCount", "10"));
@@ -1387,6 +1441,7 @@ namespace UCM_Tools.Config
                 int.TryParse(ConfigXML.GetKeyString("TrackTextSize", "255"), out _TrackTextSize);
                 _TrackTextFixedSize = bool.Parse(ConfigXML.GetKeyString("TrackTextFixedSize", "false"));
                 double.TryParse(ConfigXML.GetKeyString("TrackTextScale", "2.0"), out _TrackTextScale);
+                double.TryParse(ConfigXML.GetKeyString("TrackTextRefDistance", "50"), out _TrackTextRefDistance);
                 _AxisTextFixedSize = bool.Parse(ConfigXML.GetKeyString("AxisTextFixedSize", "false"));
                 double.TryParse(ConfigXML.GetKeyString("AxisTextScale", "2.0"), out _AxisTextScale);
                 #region 跟踪轨迹
@@ -1397,6 +1452,8 @@ namespace UCM_Tools.Config
                 int.TryParse(ConfigXML.GetKeyString("TrackTrajectoryPointCount", "255"), out _TrackTrajectoryPointCount);
                 int.TryParse(ConfigXML.GetKeyString("TrackTrajectoryTime", "1000"), out _TrackTrajectoryTime);
                 int.TryParse(ConfigXML.GetKeyString("ClearTrackTrajectoryType", "0"), out _ClearTrackTrajectoryType);
+                _TrackTrajectoryIncremental = bool.Parse(ConfigXML.GetKeyString("TrackTrajectoryIncremental", "true"));
+                int.TryParse(ConfigXML.GetKeyString("RenderIntervalMs", "0"), out _RenderIntervalMs);
                 #endregion 跟踪轨迹
                 int.TryParse(ConfigXML.GetKeyString("GetTimeType", "0"), out _GetTimeType);
                 _VTKBackColor = bool.Parse(ConfigXML.GetKeyString("VTKBackColor", "false"));

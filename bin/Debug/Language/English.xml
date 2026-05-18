@@ -11,7 +11,7 @@
 		<Control name="Save" text="Save" />
 		<Control name="Close" text="Close" />
 		<Control name="Determine" text="Whether or not to Quit" />
-		<Control name="System_Name" text="Point Cloud V1.0.2" />
+		<Control name="System_Name" text="Point Cloud V1.0.3" />
     </Controls>
   </Form>
 
@@ -74,6 +74,9 @@
 			<Control name="CheckFailedResend" text="Data transport failed resend" />
 			<Control name="DataTransportFinish" text="Data transport finish，wait update finish（less than 40s）...." />
 			<Control name="UpgradeTip" text="Some radars waiting 30 seconds for radar restart after upgrade" />
+			<Control name="Connected" text="Connected" />
+			<Control name="Disconnected" text="Disconnected" />
+			<Control name="Reconnecting" text="Reconnecting" />
 		</Controls>
 	</Form>
 	<Form>
@@ -199,6 +202,7 @@
 			<Control name="SystemInfoArea" text="System Info Area" />
 			<Control name="VideoPreview" text="Video Preview" />
 			<Control name="XY2DView" text="XYView" />
+			<Control name="GpsState" text="Gps State" />
 		</Controls>
 	</Form>
 
@@ -253,5 +257,19 @@
 			<Control name="RTSPVideoError" text="Verify rtsp address validity" />
 		</Controls>
 	</Form>
-
+	<Form>
+		<!--GPS信息-->
+		<Name>GPSInfoForm</Name>
+		<Controls>
+			<Control name="GPSInfoTitle" text="GPS Infomation" />
+			<Control name="GPSInfo" text="GPS Infomation Area" />
+			<Control name="Acc" text="加速度" />
+			<Control name="Av" text="角速度" />
+			<Control name="Longitude" text="纬度" />
+			<Control name="Latitude" text="经度" />
+			<Control name="Altitude" text="海拔高度" />
+			<Control name="Velocity" text="速度" />
+			<Control name="Declination" text="磁偏角" />
+		</Controls>
+	</Form>
 </Softimite>

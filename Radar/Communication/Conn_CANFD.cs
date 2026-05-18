@@ -1,7 +1,4 @@
-﻿using UCM_Tools.CAN_Conn;
-using UCM_Tools.Config;
-using UCM_Tools.Tools;
-using LogProc;
+﻿using LogProc;
 using Sunny.UI;
 using System;
 using System.Collections.Generic;
@@ -10,6 +7,10 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using UCM_Tools.CAN_Conn;
+using UCM_Tools.Config;
+using UCM_Tools.Models;
+using UCM_Tools.Tools;
 using ZLGCAN;
 using static UCM_Tools.CAN_Conn.CAN_Function;
 
@@ -45,7 +46,7 @@ namespace UCM_Tools.Radar.Communication
             }
             recv_data_thread = null;
             CAN_Function.CloseCAN(connParams);
-            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? "重连中..." : "已手动断开连接");
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconneting: ConnState.Disconnected);// "重连中..." : "已手动断开连接");
         }
 
 
@@ -68,14 +69,14 @@ namespace UCM_Tools.Radar.Communication
                 recv_data_thread.setStart(_connected);
                 recv_data_thread.RecvCANData += RecvData;
                 recv_data_thread.RecvFDData += RecvDataFD;
-                OnConnectStatusChanged?.Invoke(true, "连接成功");
+                OnConnectStatusChanged?.Invoke(true, ConnState.Connected);
                 StartHeartbeatCheck();
                 return true;
             }
             catch (Exception ex)
             {
                 Log.Error($"Conn_CANFD OpenDevice() Ex\r\n{ex.ToString()}");
-                OnConnectStatusChanged?.Invoke(false, ex.Message);
+                OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                 StartReconnect();
                 return false;
             }
@@ -141,14 +142,14 @@ namespace UCM_Tools.Radar.Communication
             if (_maxReconnectCount != -1 && _currentReconnnectCount >= _maxReconnectCount)
             {
                 _isReconnecting = false;
-                OnConnectStatusChanged?.Invoke(false, "已达到最大重连次数，停止重连");
+                OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                 return;
             }
             _isReconnecting = true;
             _reconnectTimer = new Timer(async (state) =>
             {
                 _currentReconnnectCount++;
-                OnConnectStatusChanged?.Invoke(false, $"正在第{_currentReconnnectCount}次重连...");
+                OnConnectStatusChanged?.Invoke(false, ConnState.Reconneting);
                 await OpenDevice();
             }, null, _reconnectIntervalMs, Timeout.Infinite);
         }
@@ -166,7 +167,7 @@ namespace UCM_Tools.Radar.Communication
             {
                 if (!GetConnected())
                 {
-                    OnConnectStatusChanged?.Invoke(false, "CAN设备连接已断开");
+                    OnConnectStatusChanged?.Invoke(false, ConnState.Disconnected);
                     StartReconnect();
                 }
             }, null, 0, 5000);

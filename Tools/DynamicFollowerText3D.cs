@@ -25,7 +25,6 @@ namespace UCM_Tools.Tools
         private vtkRenderer targetRenderer = null;
         private bool initialized = false;
         private bool isCleaning = false;  // 防止重入
-        private double _trackRefDistance = -1; // -1=未校准，首次启用时自动计算
 
         private StringBuilder sb = new StringBuilder(100);
 
@@ -96,29 +95,6 @@ namespace UCM_Tools.Tools
 
             usedThisFrame.Clear();
 
-            // 首次启用 TrackTextFixedSize 时自动校准参考距离
-            if (Config.SystemSetting.TrackTextFixedSize && _trackRefDistance < 0 && trackData.Count > 0)
-            {
-                double[] camPos = targetRenderer.GetActiveCamera().GetPosition();
-                double totalDist = 0;
-                int count = 0;
-                foreach (var t in trackData)
-                {
-                    double px = t.XAxis, py = t.YAxis, pz = t.ZAxis;
-                    if (nonUniformScale && globalTransform != null)
-                    {
-                        double[] tp = globalTransform.TransformPoint(px, py, pz);
-                        px = tp[0]; py = tp[1]; pz = tp[2];
-                    }
-                    double dx = px - camPos[0];
-                    double dy = py - camPos[1];
-                    double dz = pz - camPos[2];
-                    double d = Math.Sqrt(dx * dx + dy * dy + dz * dz);
-                    if (d > 0.1) { totalDist += d; count++; }
-                }
-                _trackRefDistance = count > 0 ? totalDist / count : 50.0;
-            }
-
             foreach (var target in trackData)
             {
                 int index = GetOrCreateActor(target.ID);
@@ -185,17 +161,17 @@ namespace UCM_Tools.Tools
             }
 
             double[] bounds = vectorText.GetOutput().GetBounds();
-            double scale = 0.7;
+            double scale = 2.0;
 
             // 距离补偿：当 TrackTextFixedSize=true 时，文字远近大小一致
-            if (Config.SystemSetting.TrackTextFixedSize && _trackRefDistance > 0)
+            if (Config.SystemSetting.TrackTextFixedSize && Config.SystemSetting.TrackTextRefDistance > 0)
             {
                 double[] camPos = targetRenderer.GetActiveCamera().GetPosition();
                 double dx = posX - camPos[0];
                 double dy = posY - camPos[1];
                 double dz = posZ - camPos[2];
                 double distance = Math.Sqrt(dx * dx + dy * dy + dz * dz);
-                scale = scale * (Math.Max(distance, 1.0) / _trackRefDistance)
+                scale = scale * (Math.Max(distance, 1.0) / Config.SystemSetting.TrackTextRefDistance)
                         * Config.SystemSetting.TrackTextScale;
             }
             double textWidth = (bounds[1] - bounds[0]) * scale;
@@ -305,7 +281,6 @@ namespace UCM_Tools.Tools
                 initialized = false;
                 isCleaning = false;
                 targetRenderer = null;
-                _trackRefDistance = -1;
             }
         }
 
@@ -345,22 +320,6 @@ namespace UCM_Tools.Tools
 
             double[] camPos = targetRenderer.GetActiveCamera().GetPosition();
 
-            // 相机位置变更后重新校准
-            if (idToIndex.Count > 0)
-            {
-                double totalDist = 0;
-                int count = 0;
-                foreach (var kvp in idToIndex)
-                {
-                    int idx = kvp.Value;
-                    if (idx >= followers.Count || followers[idx] == null) continue;
-                    double[] p = followers[idx].GetPosition();
-                    double d = Dist(p, camPos);
-                    if (d > 0.1) { totalDist += d; count++; }
-                }
-                if (count > 0) _trackRefDistance = totalDist / count;
-            }
-
             foreach (var kvp in idToIndex)
             {
                 int index = kvp.Value;
@@ -369,7 +328,7 @@ namespace UCM_Tools.Tools
                 var follower = followers[index];
                 double[] pos = follower.GetPosition();
                 double distance = Dist(pos, camPos);
-                double scale = 0.7 * (Math.Max(distance, 1.0) / _trackRefDistance)
+                double scale = 2.0 * (Math.Max(distance, 1.0) / Config.SystemSetting.TrackTextRefDistance)
                                * Config.SystemSetting.TrackTextScale;
                 follower.SetScale(scale, scale, scale);
                 follower.SetCamera(targetRenderer.GetActiveCamera());

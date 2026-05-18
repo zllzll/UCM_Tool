@@ -11,7 +11,7 @@
 		<Control name="Save" text="保存" />
 		<Control name="Close" text="关闭" />
         <Control name="Determine" text="确定要关闭？" />
-        <Control name="System_Name" text="点云成像上位机V1.0.2" />
+        <Control name="System_Name" text="点云成像上位机V1.0.3" />
     </Controls>
   </Form>
 
@@ -74,6 +74,9 @@
 		<Control name="CheckFailedResend" text="数据传输失败重传" />
 		<Control name="DataTransportFinish" text="数据传输完成，等待雷达升级（40s内）...." />
 		<Control name="UpgradeTip" text="注:部分雷达(如UCM211)升级完成后需等待雷达重启30s" />
+		<Control name="Connected" text="设备连接成功" />
+		<Control name="Disconnected" text="设备连接失败" />
+		<Control name="Reconnecting" text="设备重连中" />
     </Controls>
   </Form>
   <Form>
@@ -200,6 +203,7 @@
 		<Control name="SystemInfoArea" text="系统消息区" />
 		<Control name="VideoPreview" text="视频预览" />
 		<Control name="XY2DView" text="XY俯视图预览" />
+		<Control name="GpsState" text="GPS状态" />
     </Controls>
   </Form>
 
@@ -254,6 +258,20 @@
 		<Control name="RTSPVideoError" text="请检查RTSP流是否正常" />
     </Controls>
   </Form>
-	
+	<Form>
+		<!--GPS信息-->
+		<Name>GPSInfoForm</Name>
+		<Controls>
+			<Control name="GPSInfoTitle" text="GPS信息" />
+			<Control name="GPSInfo" text="GPS信息展示区" />
+			<Control name="Acc" text="加速度" />
+			<Control name="Av" text="角速度" />
+			<Control name="Longitude" text="纬度" />
+			<Control name="Latitude" text="经度" />
+			<Control name="Altitude" text="海拔高度" />
+			<Control name="Velocity" text="速度" />
+			<Control name="Declination" text="磁偏角" />
+		</Controls>
+	</Form>
 
 </Softimite>

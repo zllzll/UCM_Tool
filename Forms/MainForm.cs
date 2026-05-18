@@ -15,6 +15,7 @@ using System.Drawing.Drawing2D;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.ConstrainedExecution;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -38,8 +39,10 @@ namespace UCM_Tools.Forms
     {// 实例
         DateTime lastDrawTime = DateTime.Now;
         private DynamicFollowerText3D dynamicFollowerText = new DynamicFollowerText3D();
+        private GdiTextOverlay gdiOverlay = new GdiTextOverlay();
         VideoPreviewForm videoPreviewForm = null;
         TrackNplotForm trackNplotForm = null;
+        GPSInfoForm gpsInfoForm = null;
         string periodstring = "*******************  xyz_data **************************";
         string periodstringPointTrack = "*******************  point_track_data **************************";
         string saveDataClusterAlogHead = "frame_id,range,azimuth,elevation,velocity,snr,v_ego_x,v_ego_y,v_ego_z";
@@ -96,18 +99,21 @@ namespace UCM_Tools.Forms
         // 性能优化：复用对象
         private vtkCoordinate cachedCoordinate = null;
         private double[] cachedCameraPos = new double[3];
-        // 轨迹增量更新
-        private HashSet<uint> trajectoryDirtyIds = new HashSet<uint>();
-        private Dictionary<uint, int> trajectoryBaseIndex = new Dictionary<uint, int>();
+        // 渲染节流
+        private DateTime lastRenderTime = DateTime.MinValue;
+        private bool renderSkipped = false;
 
         #region 跟踪目标轨迹
-        // 轨迹Actor（使用vtkPolyData表示线条）
-        private vtkActor trajectoryActor = null;
-        private vtkPolyData trajectoryData = null;
-        private vtkPoints trajectoryPoints = null;
-        private vtkCellArray trajectoryLines = null;
-        private vtkPolyDataMapper trajectoryMapper = null;
-        private vtkUnsignedCharArray trajectoryColors = null; // 新增：轨迹颜色数组（ID着色模式用）
+        // 每目标独立Actor：天然支持增量追加和单目标删除
+        private class TrajectoryActorData
+        {
+            public vtkActor Actor;
+            public vtkPolyData Data;
+            public vtkPoints Points;
+            public vtkCellArray Lines;
+            public vtkPolyDataMapper Mapper;
+        }
+        private Dictionary<uint, TrajectoryActorData> trajectoryActors = new Dictionary<uint, TrajectoryActorData>();
 
         // 轨迹数据管理：TrackID -> 轨迹点队列
         private Dictionary<uint, Queue<TargetInfo.RadarTargetInfoStruct>> trackTrajectories = new Dictionary<uint, Queue<TargetInfo.RadarTargetInfoStruct>>();
@@ -138,6 +144,9 @@ namespace UCM_Tools.Forms
         public delegate void TrackDataDelegate(List<TargetInfo.RadarTargetInfoStruct> data);
 
         public static event TrackDataDelegate trackDataReceived;
+        public delegate void GpsInfoDataDelegate(IMUAndGPSData data);
+
+        public static event GpsInfoDataDelegate gpsInfoDataReceived;
         #endregion 全局变量
 
         #region 初始化
@@ -207,6 +216,10 @@ namespace UCM_Tools.Forms
                     {
                         SunnyUIHelper.SetTheme(trackNplotForm, tsItem.Text);
                     }
+                    if (gpsInfoForm != null)
+                    {
+                        SunnyUIHelper.SetTheme(gpsInfoForm, tsItem.Text);
+                    }
                 }
             }
             catch (Exception ex)
@@ -256,6 +269,8 @@ namespace UCM_Tools.Forms
                 lb_SystemInfo.Text = MultiLanguage.LanguageText("MainForm", "SystemInfoArea");
                 menuItem_VideoPreview.Text = MultiLanguage.LanguageText("MainForm", "VideoPreview");
                 ts_TrackData.Text = MultiLanguage.LanguageText("MainForm", "XY2DView");
+                lb_GpsText.Text = MultiLanguage.LanguageText("MainForm", "GpsState");
+                ts_GpsInfoData.Text = MultiLanguage.LanguageText("GPSInfoForm", "GPSInfoTitle");
             }
             catch (Exception ex) { Log.Error($"MainForm LoadLanguage() Ex\r\n{ex.ToString()}"); }
         }
@@ -318,6 +333,7 @@ namespace UCM_Tools.Forms
                 ClearVTKDynamicData();
                 ClearVTKStaticData();
                 dynamicFollowerText.Cleanup(firstRenderer);
+                gdiOverlay?.Dispose();
                 #endregion VTK清除
 
                 Process.GetCurrentProcess().Kill();
@@ -494,9 +510,14 @@ namespace UCM_Tools.Forms
             StatusMenuShow();
 
             DisplaySystemParams();
+
+            // 初始化GDI文本叠加层
+            gdiOverlay.Initialize(renderWindowControl1.Width, renderWindowControl1.Height);
+            gdiOverlay.Enabled = SystemSetting.UseGdiTextOverlay;
         }
         private void renderWindowControl1_SizeChanged(object sender, EventArgs e)
         {
+            gdiOverlay?.Resize(renderWindowControl1.Width, renderWindowControl1.Height);
             if (firstRenderer != null && renderWindow != null)
             {
                 // 仅重新计算Zoom，不改变位置
@@ -790,6 +811,7 @@ namespace UCM_Tools.Forms
             lb_ShowTarNum.Text = "0";
             lb_TrackNum.Text = "0";
             lb_Version.Text = "v0.0.0";
+            lb_Gps.Text = "Invalid";
         }
 
         private async Task<bool> Start()
@@ -825,8 +847,9 @@ namespace UCM_Tools.Forms
             this.Invoke((EventHandler)delegate { lb_Version.Text = $"v{ver}"; });
         }
 
-        private void Radar_connectStatusChangedEvent(bool isConnected, string message)
+        private void Radar_connectStatusChangedEvent(bool isConnected, ConnState connState)
         {
+            string message = MultiLanguage.LanguageText("ErrorInfo", connState.ToString());
             this.Invoke((Action)(() =>
             {
                 if (isConnected)
@@ -838,8 +861,6 @@ namespace UCM_Tools.Forms
                     }
                     targetFrameTemp.Clear();
                     targetTemp.Clear();
-                    trajectoryDirtyIds.Clear();
-                    trajectoryBaseIndex.Clear();
                     ClearTrajectoryData();
                     ClearPointCloud();
                     ClearTrackTargets();
@@ -909,8 +930,12 @@ namespace UCM_Tools.Forms
                 }
             }
             UpdateLabels(targetInfoList.Count, LoadTemp.Count, 0);
-            if (isLostFocus && (DateTime.Now - lastDrawTime).TotalMilliseconds < SystemSetting.VtkDrawTimeInLostFocus)
-                return;
+            if (isLostFocus)
+            {
+                int throttle = SystemSetting.VtkDrawTimeInLostFocus > 0 ? SystemSetting.VtkDrawTimeInLostFocus : 500;
+                if ((DateTime.Now - lastDrawTime).TotalMilliseconds < throttle)
+                    return;
+            }
 
             lastDrawTime = DateTime.Now;
             UpdatePointCloud(LoadTemp);
@@ -931,9 +956,16 @@ namespace UCM_Tools.Forms
             if ((pointData == null || pointData.Count == 0) && (trackData == null || trackData.Count == 0))
             {
                 ClearPointCloud();
-                ClearTrackTargets(); // 新增
-                ClearTrajectory(); // 新增：清理轨迹
+                ClearTrackTargets();
+                ClearTrajectory();
                 dynamicFollowerText.HideAll();
+                // 清空GDI叠加层
+                if (gdiOverlay != null && textOverlayPanel != null)
+                {
+                    gdiOverlay.BeginFrame();
+                    gdiOverlay.EndFrame();
+                    textOverlayPanel.SetOverlayBitmap(gdiOverlay.GetBitmap());
+                }
                 return;
             }
 
@@ -957,7 +989,7 @@ namespace UCM_Tools.Forms
                     // 2. 初始化或复用点云Actor
                     if (pointCloudActor == null) InitializePointCloudActor();
                     if (trackTargetActor == null) InitializeTrackTargetActor(); // 新增
-                    if (trajectoryActor == null) InitializeTrajectoryActor(); // 新增：初始化轨迹
+                    // 轨迹Actor按需创建，不再需要初始化检查
 
                     if (pointCloudActor.GetProperty().GetPointSize() != SystemSetting.PointSize)
                         pointCloudActor?.GetProperty().SetPointSize(SystemSetting.PointSize);//需要更新点目标
@@ -978,11 +1010,23 @@ namespace UCM_Tools.Forms
                             trackSphereSource.SetRadius(SystemSetting.TrackSize);
                         UpdateTrackTargetData(trackData);
                         // 新增：更新轨迹（高性能，与跟踪目标同步更新）
-                        UpdateTrajectoryData();
-                        // 5. 新增：添加跟踪目标文字（强制显示ID和坐标）
+                        UpdateTrajectoryData(trackData);
+                        // 5. 添加跟踪目标文字
                         if (SystemSetting.DisplayTrackText)
                         {
-                            if (isLostFocus || (!isLostFocus && (DateTime.Now - lastDrawTime).TotalMilliseconds > SystemSetting.VtkDrawTimeInLostFocus))
+                            int textThrottle = isLostFocus
+                                ? (SystemSetting.VtkDrawTimeInLostFocus > 0 ? SystemSetting.VtkDrawTimeInLostFocus : 500)
+                                : SystemSetting.VtkDrawTimeInLostFocus;
+                            bool textTimeOk = isLostFocus
+                                ? (DateTime.Now - lastDrawTime).TotalMilliseconds >= textThrottle
+                                : (DateTime.Now - lastDrawTime).TotalMilliseconds > textThrottle;
+
+                            if (SystemSetting.UseGdiTextOverlay)
+                            {
+                                // GDI+ 位图叠加：所有文本渲染到一张位图，1次draw call
+                                RenderTrackTextGdiOverlay(trackData);
+                            }
+                            else if (textTimeOk)
                             {
                                 if (SystemSetting.UseScreenSpaceText)
                                 {
@@ -1059,6 +1103,9 @@ namespace UCM_Tools.Forms
                     UpdateAxisLabelScale();
                     // 6. 只渲染一次
                     renderWindow.Render();
+                    // 7. 更新GDI文本叠加层
+                    if (gdiOverlay.Enabled && textOverlayPanel != null)
+                        textOverlayPanel.SetOverlayBitmap(gdiOverlay.GetBitmap());
                 }));
             }
             catch (Exception ex)
@@ -1654,8 +1701,24 @@ namespace UCM_Tools.Forms
                     }
                 }
             }
-            if (isLostFocus && (DateTime.Now - lastDrawTime).TotalMilliseconds < SystemSetting.VtkDrawTimeInLostFocus)
-                return;
+            if (isLostFocus)
+            {
+                int throttle = SystemSetting.VtkDrawTimeInLostFocus > 0 ? SystemSetting.VtkDrawTimeInLostFocus : 500;
+                if ((DateTime.Now - lastDrawTime).TotalMilliseconds < throttle)
+                    return;
+            }
+
+            // 渲染节流：跳帧时仅积累数据，不触发渲染
+            if (SystemSetting.RenderIntervalMs > 0)
+            {
+                double elapsed = (DateTime.Now - lastRenderTime).TotalMilliseconds;
+                if (elapsed < SystemSetting.RenderIntervalMs)
+                {
+                    renderSkipped = true;
+                    return;
+                }
+            }
+            lastRenderTime = DateTime.Now;
             UpdatePointCloud(LoadTemp, TrackTemp);
 
         }
@@ -1803,6 +1866,62 @@ namespace UCM_Tools.Forms
 
         #region 跟踪目标文字（独立管理，确保全部显示）
 
+        /// <summary>
+        /// GDI+ 位图叠加方式渲染跟踪文本：所有文本绘制到一张位图，1次draw call
+        /// </summary>
+        private void RenderTrackTextGdiOverlay(List<TargetInfo.RadarTargetInfoStruct> trackData)
+        {
+            if (gdiOverlay == null || textOverlayPanel == null) return;
+
+            gdiOverlay.Enabled = true;
+            gdiOverlay.TextFont = new Font("Consolas",
+                SystemSetting.Text2DFontSize > 0 ? SystemSetting.Text2DFontSize : 12,
+                FontStyle.Bold);
+            gdiOverlay.TextColor = SystemSetting.TrackTextColor;
+
+            gdiOverlay.BeginFrame();
+
+            int maxTargets = gdiOverlay.MaxTargets;
+            int count = Math.Min(trackData.Count, maxTargets);
+
+            for (int i = 0; i < count; i++)
+            {
+                var target = trackData[i];
+
+                double wx = target.XAxis;
+                double wy = target.YAxis + SystemSetting.TrackSize + 1.2;
+                double wz = target.ZAxis;
+
+                if (SystemSetting.NonUniformScale)
+                {
+                    double[] t = SystemSetting.TransformPoint(wx, wy, wz);
+                    wx = t[0]; wy = t[1]; wz = t[2];
+                }
+
+                int[] screen = WorldToScreenCoordinates(wx, wy, wz);
+                string text = VTKHelper.GetDetectionTextH(target);
+
+                float sx = ClampScreenX(screen[0]);
+                float sy = ClampScreenY(screen[1] + 15);
+
+                gdiOverlay.DrawTarget(text, sx, sy);
+            }
+
+            gdiOverlay.EndFrame();
+        }
+
+        private float ClampScreenX(int x)
+        {
+            int w = renderWindowControl1?.Width ?? 870;
+            return Math.Max(0, Math.Min(x, w - 120));
+        }
+
+        private float ClampScreenY(int y)
+        {
+            int h = renderWindowControl1?.Height ?? 745;
+            return Math.Max(0, Math.Min(y, h - 20));
+        }
+
         private void AddTrack2DTextBatch(List<TargetInfo.RadarTargetInfoStruct> trackData)
         {
             int maxTexts = SystemSetting.Max2DTextCount > 0
@@ -1834,6 +1953,10 @@ namespace UCM_Tools.Forms
             }
         }
 
+        /// <summary>
+        /// 废弃
+        /// </summary>
+        /// <param name="trackData"></param>
         private void AddTrack3DTextBatch(List<TargetInfo.RadarTargetInfoStruct> trackData)
         {
             int maxTexts = SystemSetting.Max3DTextCount > 0
@@ -2059,175 +2182,232 @@ namespace UCM_Tools.Forms
             ClearTrackTextActors();
         }
 
-        #region 跟踪轨迹
-
+                #region 跟踪轨迹
         /// <summary>
-        /// 初始化轨迹显示Actor（仅执行一次）
+        /// 初始化/重建轨迹（设置变更时调用，清空所有Actor由下一帧重建）
         /// </summary>
         private void InitializeTrajectoryActor()
         {
-            if (trajectoryActor != null)
-            {
-                ClearTrajectory();
-            }
-            trajectoryPoints = vtkPoints.New();
-            trajectoryLines = vtkCellArray.New();
-            if (SystemSetting.TrackColorMode == 1) // ID着色模式
-            {
-                // 新增：颜色数组用于ID着色模式
-                trajectoryColors = vtkUnsignedCharArray.New();
-                trajectoryColors.SetName("Colors");
-                trajectoryColors.SetNumberOfComponents(3); // RGB
-            }
-            else
-            {
-                trajectoryColors = null; // Mode=0时不创建
-            }
-
-            trajectoryData = vtkPolyData.New();
-            trajectoryData.SetPoints(trajectoryPoints);
-            trajectoryData.SetLines(trajectoryLines);
-
-            // 根据配置决定是否添加颜色数组
-            //if (SystemSetting.TrackColorMode == 1) // ID着色模式
-            //{
-            //    trajectoryData.GetCellData().SetScalars(trajectoryColors); // 注意：线条颜色用CellData
-            //}
-
-            trajectoryMapper = vtkPolyDataMapper.New();
-            trajectoryMapper.SetInput(trajectoryData);
-            // 根据颜色模式配置Mapper
-            if (SystemSetting.TrackColorMode == 1) // ID着色模式
-            {
-                trajectoryData.GetCellData().SetScalars(trajectoryColors); // 注意：线条颜色用CellData
-                trajectoryMapper.SetColorMode(0); // 直接使用RGB值
-                trajectoryMapper.SetScalarModeToUseCellData(); // 使用单元（线条）数据
-                trajectoryMapper.ScalarVisibilityOn(); // 开启标量着色
-            }
-            else // 统一颜色模式
-            {
-                trajectoryData.GetCellData().SetScalars(null); // **清除CellData中的标量引用**
-                trajectoryMapper.ScalarVisibilityOff(); // 关闭标量颜色映射
-                // 禁用颜色数组以提升性能
-                trajectoryColors = null;
-            }
-
-            trajectoryActor = vtkActor.New();
-            trajectoryActor.SetMapper(trajectoryMapper);
-            trajectoryActor.GetProperty().SetLineWidth(SystemSetting.TrackTrajectoryLineWidth);
-            trajectoryActor.GetProperty().SetOpacity(0.5); // 轻微透明，避免遮挡
-            // 关键：直接在 Property 上设置颜色（最简单可靠）
-            // 统一颜色模式下设置颜色
-            if (SystemSetting.TrackColorMode == 0)
-            {
-                UpdateTrajectoryColor();
-            }
-            // 关键：应用全局变换
-            if (SystemSetting.NonUniformScale)
-                trajectoryActor.SetUserTransform(SystemSetting.GlobalTransform);
-            firstRenderer.AddActor(trajectoryActor);
+            ClearTrajectory();
         }
-        // 更新颜色方法（当设置改变时调用）
+
+        /// <summary>
+        /// 更新所有轨迹Actor的颜色和线宽
+        /// </summary>
         public void UpdateTrajectoryColor()
         {
-            if (trajectoryActor == null) return;
-
-            if (SystemSetting.TrackColorMode == 0) // 统一颜色模式
+            lock (trajectoryLock)
             {
-                trajectoryActor.GetProperty().SetColor(
-                    SystemSetting.TrackTrajectoryColor.R / 255.0,
-                    SystemSetting.TrackTrajectoryColor.G / 255.0,
-                    SystemSetting.TrackTrajectoryColor.B / 255.0
-                );
-
-                // 确保标量颜色关闭（如果之前是ID着色模式切换过来）
-                if (trajectoryMapper != null)
+                float lineWidth = SystemSetting.TrackTrajectoryLineWidth;
+                foreach (var kvp in trajectoryActors)
                 {
-                    trajectoryMapper.ScalarVisibilityOff();
+                    var actor = kvp.Value.Actor;
+                    actor.GetProperty().SetLineWidth(lineWidth);
+                    if (SystemSetting.TrackColorMode == 0)
+                    {
+                        actor.GetProperty().SetColor(
+                            SystemSetting.TrackTrajectoryColor.R / 255.0,
+                            SystemSetting.TrackTrajectoryColor.G / 255.0,
+                            SystemSetting.TrackTrajectoryColor.B / 255.0
+                        );
+                        kvp.Value.Mapper.ScalarVisibilityOff();
+                    }
+                    else
+                    {
+                        PubClass.GetColorById(kvp.Key, out byte r, out byte g, out byte b);
+                        actor.GetProperty().SetColor(r / 255.0, g / 255.0, b / 255.0);
+                    }
                 }
-            }
-            else // ID着色模式
-            {
-                // 颜色由顶点数据数组控制，这里只需确保标量可见性开启
-                if (trajectoryMapper != null)
-                {
-                    trajectoryMapper.ScalarVisibilityOn();
-                    trajectoryMapper.SetScalarModeToUseCellData();
-                }
-
-                // 如果颜色映射算法改变，触发数据更新重绘
-                trajectoryData?.Modified();
             }
         }
-        private void UpdateTrajectoryData()
+
+        /// <summary>
+        /// 更新轨迹数据（每帧调用）
+        /// 每目标独立Actor：活跃目标增量追加线段，消失目标直接移除Actor
+        /// </summary>
+        private void UpdateTrajectoryData(List<TargetInfo.RadarTargetInfoStruct> trackData)
         {
-            if (!SystemSetting.DisplayTrackTrajectory)
+            if (!SystemSetting.DisplayTrackTrajectory || firstRenderer == null)
             {
                 ClearTrajectoryData();
                 return;
             }
             lock (trajectoryLock)
             {
-                if (trajectoryActor.GetProperty().GetLineWidth() != SystemSetting.TrackTrajectoryLineWidth)
-                    trajectoryActor.GetProperty().SetLineWidth(SystemSetting.TrackTrajectoryLineWidth);
+                HashSet<uint> currentIds = trackData != null
+                    ? new HashSet<uint>(trackData.Select(t => t.ID))
+                    : new HashSet<uint>();
 
-                trajectoryPoints.Reset();
-                trajectoryLines.Reset();
+                float lineWidth = SystemSetting.TrackTrajectoryLineWidth;
+                int colorMode = SystemSetting.TrackColorMode;
+                Color uniformColor = SystemSetting.TrackTrajectoryColor;
+                bool nonUniformScale = SystemSetting.NonUniformScale;
 
-                if (SystemSetting.TrackColorMode == 1)
+                // 1. 处理活跃目标：新建Actor 或 增量/重建
+                bool needRebuild = renderSkipped;
+                renderSkipped = false;
+
+                foreach (var id in currentIds)
                 {
-                    if (trajectoryColors == null)
+                    if (!trackTrajectories.TryGetValue(id, out var queue) || queue.Count < 2)
+                        continue;
+
+                    if (!trajectoryActors.TryGetValue(id, out var actorData))
                     {
-                        trajectoryColors = vtkUnsignedCharArray.New();
-                        trajectoryColors.SetName("Colors");
-                        trajectoryColors.SetNumberOfComponents(3);
+                        actorData = CreateTrajectoryActor(id, queue, lineWidth, colorMode, uniformColor, nonUniformScale);
+                        trajectoryActors[id] = actorData;
                     }
-                    trajectoryColors.Reset();
+                    else if (needRebuild)
+                    {
+                        RebuildActorFromQueue(actorData, queue);
+                    }
+                    else
+                    {
+                        AppendTrajectorySegment(actorData, queue, lineWidth);
+                    }
                 }
-                else
+
+                // 2. 移除已消失目标的Actor
+                var staleIds = trajectoryActors.Keys.Where(k => !trackTrajectories.ContainsKey(k)).ToList();
+                foreach (var id in staleIds)
                 {
-                    trajectoryData.GetCellData().SetScalars(null);
+                    RemoveTrajectoryActor(id);
                 }
+
+                // 打印每个ID轨迹的VTK总点数
+                foreach (var kvp in trajectoryActors)
+                {
+                    Console.WriteLine($"ID={kvp.Key}, VTK点数={kvp.Value.Points.GetNumberOfPoints()}");
+                }
+            }
+        }
+
+        private TrajectoryActorData CreateTrajectoryActor(uint id, Queue<TargetInfo.RadarTargetInfoStruct> queue,
+            float lineWidth, int colorMode, Color uniformColor, bool nonUniformScale)
+        {
+            var data = new TrajectoryActorData();
+
+            data.Points = vtkPoints.New();
+            data.Lines = vtkCellArray.New();
+            data.Data = vtkPolyData.New();
+            data.Data.SetPoints(data.Points);
+            data.Data.SetLines(data.Lines);
+
+            int count = 0;
+            foreach (var pt in queue)
+            {
+                data.Points.InsertNextPoint(pt.XAxis, pt.YAxis, pt.ZAxis);
+                count++;
+            }
+
+            if (count >= 2)
+            {
+                using (vtkIdList idList = vtkIdList.New())
+                {
+                    idList.SetNumberOfIds(count);
+                    for (int i = 0; i < count; i++)
+                        idList.SetId(i, i);
+                    data.Lines.InsertNextCell(idList);
+                }
+            }
+            data.Data.Modified();
+
+            data.Mapper = vtkPolyDataMapper.New();
+            data.Mapper.SetInput(data.Data);
+            data.Mapper.ScalarVisibilityOff();
+
+            data.Actor = vtkActor.New();
+            data.Actor.SetMapper(data.Mapper);
+            data.Actor.GetProperty().SetLineWidth(lineWidth);
+
+            if (colorMode == 1)
+            {
+                PubClass.GetColorById(id, out byte r, out byte g, out byte b);
+                data.Actor.GetProperty().SetColor(r / 255.0, g / 255.0, b / 255.0);
+            }
+            else
+            {
+                data.Actor.GetProperty().SetColor(
+                    uniformColor.R / 255.0, uniformColor.G / 255.0, uniformColor.B / 255.0);
+            }
+
+            if (nonUniformScale)
+                data.Actor.SetUserTransform(SystemSetting.GlobalTransform);
+
+            firstRenderer.AddActor(data.Actor);
+            return data;
+        }
+
+        private void AppendTrajectorySegment(TrajectoryActorData data, Queue<TargetInfo.RadarTargetInfoStruct> queue, float lineWidth)
+        {
+            int maxPoints = SystemSetting.TrackTrajectoryPointCount;
+
+            if (data.Points.GetNumberOfPoints() >= maxPoints)
+            {
+                RebuildActorFromQueue(data, queue);
+            }
+            else
+            {
+                var lastPt = queue.Last();
+                int prevIdx = data.Points.GetNumberOfPoints() - 1;
+                int newIdx = data.Points.InsertNextPoint(lastPt.XAxis, lastPt.YAxis, lastPt.ZAxis);
 
                 using (vtkIdList idList = vtkIdList.New())
                 {
-                    foreach (var kvp in trackTrajectories)
-                    {
-                        var queue = kvp.Value;
-                        if (queue.Count < 2) continue;
-
-                        int startIdx = trajectoryPoints.GetNumberOfPoints();
-                        int count = 0;
-                        foreach (var pt in queue)
-                        {
-                            trajectoryPoints.InsertNextPoint(pt.XAxis, pt.YAxis, pt.ZAxis);
-                            count++;
-                        }
-                        idList.SetNumberOfIds(count);
-                        for (int i = 0; i < count; i++)
-                            idList.SetId(i, startIdx + i);
-                        trajectoryLines.InsertNextCell(idList);
-
-                        if (SystemSetting.TrackColorMode == 1 && trajectoryColors != null)
-                        {
-                            PubClass.GetColorById(kvp.Key, out byte r, out byte g, out byte b);
-                            trajectoryColors.InsertNextTuple3(r, g, b);
-                        }
-                    }
+                    idList.SetNumberOfIds(2);
+                    idList.SetId(0, prevIdx);
+                    idList.SetId(1, newIdx);
+                    data.Lines.InsertNextCell(idList);
                 }
 
-                if (SystemSetting.TrackColorMode == 1 && trajectoryColors != null)
+                data.Data.Modified();
+            }
+
+            data.Actor.GetProperty().SetLineWidth(lineWidth);
+        }
+
+        private void RebuildActorFromQueue(TrajectoryActorData data, Queue<TargetInfo.RadarTargetInfoStruct> queue)
+        {
+            data.Points.Reset();
+            data.Lines.Reset();
+
+            int count = 0;
+            foreach (var pt in queue)
+            {
+                data.Points.InsertNextPoint(pt.XAxis, pt.YAxis, pt.ZAxis);
+                count++;
+            }
+
+            if (count >= 2)
+            {
+                using (vtkIdList idList = vtkIdList.New())
                 {
-                    trajectoryData.GetCellData().SetScalars(trajectoryColors);
-                    trajectoryMapper.ScalarVisibilityOn();
+                    idList.SetNumberOfIds(count);
+                    for (int i = 0; i < count; i++)
+                        idList.SetId(i, i);
+                    data.Lines.InsertNextCell(idList);
                 }
             }
 
-            trajectoryData.Modified();
+            data.Data.Modified();
+        }
+
+        private void RemoveTrajectoryActor(uint id)
+        {
+            if (!trajectoryActors.TryGetValue(id, out var data))
+                return;
+
+            firstRenderer?.RemoveViewProp(data.Actor);
+            data.Actor?.Dispose();
+            data.Mapper?.Dispose();
+            data.Data?.Dispose();
+            data.Points?.Dispose();
+            data.Lines?.Dispose();
+            trajectoryActors.Remove(id);
         }
 
         /// <summary>
-        /// 清空轨迹数据（不销毁Actor）
+        /// 清空轨迹数据
         /// </summary>
         private void ClearTrajectoryData()
         {
@@ -2236,53 +2416,21 @@ namespace UCM_Tools.Forms
                 trackTrajectories.Clear();
             }
 
-            if (trajectoryPoints != null) trajectoryPoints.Reset();
-            if (trajectoryLines != null) trajectoryLines.Reset();
-            if (trajectoryData != null) trajectoryData.Modified();
+            var ids = trajectoryActors.Keys.ToList();
+            foreach (var id in ids)
+                RemoveTrajectoryActor(id);
         }
 
         /// <summary>
-        /// 完全清理轨迹资源（用于关闭时）
+        /// 完全清理轨迹资源（用于关闭/断开时）
         /// </summary>
         private void ClearTrajectory()
         {
             ClearTrajectoryData();
-
-            if (trajectoryActor != null)
-            {
-                firstRenderer?.RemoveViewProp(trajectoryActor);
-                trajectoryActor.Dispose();
-                trajectoryActor = null;
-            }
-            if (trajectoryMapper != null)
-            {
-                trajectoryMapper.Dispose();
-                trajectoryMapper = null;
-            }
-            if (trajectoryData != null)
-            {
-                trajectoryData.Dispose();
-                trajectoryData = null;
-            }
-            if (trajectoryPoints != null)
-            {
-                trajectoryPoints.Dispose();
-                trajectoryPoints = null;
-            }
-            if (trajectoryLines != null)
-            {
-                trajectoryLines.Dispose();
-                trajectoryLines = null;
-            }
-            // 新增：清理颜色数组
-            if (trajectoryColors != null)
-            {
-                trajectoryColors.Dispose();
-                trajectoryColors = null;
-            }
         }
 
         #endregion 跟踪轨迹
+
 
         #endregion 跟踪模块
 
@@ -2333,6 +2481,10 @@ namespace UCM_Tools.Forms
         #region 扩展数据保存
         private void Radar_imuAndGpsSaveEvent(string time, IMUAndGPSData imuAndGpsData)
         {
+            string gpsState = imuAndGpsData != null && Math.Abs(imuAndGpsData.GpsLat - (-214.7483648)) > 0.000000001 ? "Valid" : "Invalid";
+            if (gpsInfoDataReceived != null)
+                gpsInfoDataReceived(imuAndGpsData);
+            this.BeginInvoke((EventHandler)delegate { lb_Gps.Text = gpsState; });
             if (SystemSetting.TargetData)
             {
                 if (saveDataImuAndGps == null)
@@ -2729,6 +2881,21 @@ namespace UCM_Tools.Forms
 
         #endregion
 
+        #region 2维跟踪目标
+        private void ts_GpsInfoData_Click(object sender, EventArgs e)
+        {
+            if (gpsInfoForm != null && !gpsInfoForm.IsDisposed)
+            {
+                if (gpsInfoForm.WindowState == FormWindowState.Minimized)
+                    gpsInfoForm.WindowState = FormWindowState.Normal;
+                gpsInfoForm.Focus();
+                return;
+            }
+            gpsInfoForm = new GPSInfoForm();
+            gpsInfoForm.Show();
+        }
+
+        #endregion
         #endregion 扩展功能
 
 

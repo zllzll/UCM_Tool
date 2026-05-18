@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using UCM_Tools.Models;
 using ZLGCAN;
 
 namespace UCM_Tools.Radar.Communication
@@ -37,7 +38,7 @@ namespace UCM_Tools.Radar.Communication
         public RecvConnDataEventHandler OnRecvConnDataEvent;
 
         [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-        public delegate void ConnStatusChangedHandler(bool isConnected, string message);
+        public delegate void ConnStatusChangedHandler(bool isConnected, ConnState message);
         public ConnStatusChangedHandler OnConnectStatusChanged;
 
 

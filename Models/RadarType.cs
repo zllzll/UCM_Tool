@@ -11,4 +11,11 @@ namespace UCM_Tools.Models
         public string RadarNo { get; set; }
         public string RadarName { get; set; }
     }
+
+    public enum ConnState
+    {
+        Reconneting,//重连中
+        Connected,//连接成功
+        Disconnected,//连接失败
+    }
 }

@@ -77,12 +77,6 @@ namespace UCM_Tools.Forms
             }
         }
 
-        #region 调整大小时保持控制区宽度
-        private int _fixedPanelWidthCollapsed = 10; // 收缩宽度
-        private int _fixedPanelWidthExtended = 295; // 展开宽度
-
-        #endregion 调整大小时保持控制区宽度
-
         #region 自定义拖动实现窗体大小变化
         private const int WM_NCHITTEST = 0x84;
         private const int HT_CLIENT = 0x1;

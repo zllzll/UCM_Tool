@@ -1,4 +1,5 @@
-﻿using System;
+﻿using LogProc;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -34,6 +35,7 @@ namespace UCM_Tools.Radar.Protocols.UpgradeProtocol
             }
             catch (Exception ex)
             {
+                Log.Error($"PackageUpgradeProtocol Ex\r\n{ex.ToString()}");
                 returnList = new List<byte>();
             }
             return returnList;
@@ -51,6 +53,7 @@ namespace UCM_Tools.Radar.Protocols.UpgradeProtocol
             }
             catch (Exception ex)
             {
+                Log.Error($"PackageUpgradeWriteData Ex\r\n{ex.ToString()}");
                 returnList = new List<byte>();
             }
             return returnList;

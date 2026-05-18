@@ -205,6 +205,12 @@
     <Compile Include="Forms\VideoPreviewForm.Designer.cs">
       <DependentUpon>VideoPreviewForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\TrackFilterForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\TrackFilterForm.Designer.cs">
+      <DependentUpon>TrackFilterForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="MessageBoxEx\MessageBoxEx.cs" />
     <Compile Include="MessageBoxEx\UIMessageExForm.cs">
       <SubType>Form</SubType>
@@ -283,6 +289,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\VideoPreviewForm.resx">
       <DependentUpon>VideoPreviewForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\TrackFilterForm.resx">
+      <DependentUpon>TrackFilterForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MessageBoxEx\UIMessageExForm.resx">
       <DependentUpon>UIMessageExForm.cs</DependentUpon>

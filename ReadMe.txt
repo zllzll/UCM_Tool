@@ -34,3 +34,4 @@ V1.0.3
 7、TrackTrajectoryIncremental增加轨迹增量渲染：true=每帧只追加新线段（高性能），false=每帧全量重建（旧方案）
 8、RenderIntervalMs增加渲染间隔(ms)：0=每帧渲染，>0=隔N毫秒渲染一次（节省CPU/GPU），推荐200
 9、VtkDrawTimeInLostFocus；在失去焦点时，由于会性能下降，等于0时将其自动变为500ms
+10、增加跟踪目标ID过滤，直线跟踪目标ID列表内的目标

@@ -214,6 +214,7 @@ namespace UCM_Tools.Forms
             this.ts_RadarUpgrade_SR75 = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_RadarUpgrade_UCM211 = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_GpsInfoData = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_FilterTrackIds = new System.Windows.Forms.ToolStripMenuItem();
             this.pan_Main.SuspendLayout();
             this.pan_Right.SuspendLayout();
             this.pan_Left.SuspendLayout();
@@ -4285,10 +4286,11 @@ namespace UCM_Tools.Forms
             this.menuItem_VideoPreview,
             this.ts_TrackData,
             this.ts_RadarFunction,
-            this.ts_GpsInfoData});
+            this.ts_GpsInfoData,
+            this.ts_FilterTrackIds});
             this.uiContextMenuStrip1.Name = "uiContextMenuStrip1";
             this.uiContextMenuStrip1.ShowImageMargin = false;
-            this.uiContextMenuStrip1.Size = new System.Drawing.Size(156, 136);
+            this.uiContextMenuStrip1.Size = new System.Drawing.Size(156, 158);
             this.uiContextMenuStrip1.Style = Sunny.UI.UIStyle.Custom;
             // 
             // ts_Theme
@@ -4359,6 +4361,14 @@ namespace UCM_Tools.Forms
             this.ts_GpsInfoData.Size = new System.Drawing.Size(155, 22);
             this.ts_GpsInfoData.Text = "GPS信息";
             this.ts_GpsInfoData.Click += new System.EventHandler(this.ts_GpsInfoData_Click);
+            // 
+            // ts_FilterTrackIds
+            // 
+            this.ts_FilterTrackIds.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.ts_FilterTrackIds.Name = "ts_FilterTrackIds";
+            this.ts_FilterTrackIds.Size = new System.Drawing.Size(155, 22);
+            this.ts_FilterTrackIds.Text = "过滤目标";
+            this.ts_FilterTrackIds.Click += new System.EventHandler(this.ts_FilterTrackIds_Click);
             // 
             // MainForm
             // 
@@ -4655,5 +4665,6 @@ namespace UCM_Tools.Forms
         private UIPanel uiPanel11;
         private UILabel lb_GpsText;
         private ToolStripMenuItem ts_GpsInfoData;
+        private ToolStripMenuItem ts_FilterTrackIds;
     }
 }

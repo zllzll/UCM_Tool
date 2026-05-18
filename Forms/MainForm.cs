@@ -43,6 +43,7 @@ namespace UCM_Tools.Forms
         VideoPreviewForm videoPreviewForm = null;
         TrackNplotForm trackNplotForm = null;
         GPSInfoForm gpsInfoForm = null;
+        TrackFilterForm trackFilterForm = null;
         string periodstring = "*******************  xyz_data **************************";
         string periodstringPointTrack = "*******************  point_track_data **************************";
         string saveDataClusterAlogHead = "frame_id,range,azimuth,elevation,velocity,snr,v_ego_x,v_ego_y,v_ego_z";
@@ -175,6 +176,7 @@ namespace UCM_Tools.Forms
             // 在渲染前计算并应用非等比例缩放
             if (SystemSetting.NonUniformScale)
                 SystemSetting.ApplyNonUniformScale();
+            TrackFilterForm.FilterChanged += OnFilterChanged;
         }
 
         #region 加载主题
@@ -219,6 +221,10 @@ namespace UCM_Tools.Forms
                     if (gpsInfoForm != null)
                     {
                         SunnyUIHelper.SetTheme(gpsInfoForm, tsItem.Text);
+                    }
+                    if (trackFilterForm != null)
+                    {
+                        SunnyUIHelper.SetTheme(trackFilterForm, tsItem.Text);
                     }
                 }
             }
@@ -267,10 +273,13 @@ namespace UCM_Tools.Forms
                 btn_StopReplay.Text = MultiLanguage.LanguageText("MainForm", "lb_DataReplayStop");
                 btn_SystemSet.Text = MultiLanguage.LanguageText("MainForm", "btn_SystemSet");
                 lb_SystemInfo.Text = MultiLanguage.LanguageText("MainForm", "SystemInfoArea");
+                ts_Theme.Text = MultiLanguage.LanguageText("MainForm", "ts_Theme");
+                ts_RadarFunction.Text = MultiLanguage.LanguageText("MainForm", "ts_RadarFunc");
                 menuItem_VideoPreview.Text = MultiLanguage.LanguageText("MainForm", "VideoPreview");
                 ts_TrackData.Text = MultiLanguage.LanguageText("MainForm", "XY2DView");
                 lb_GpsText.Text = MultiLanguage.LanguageText("MainForm", "GpsState");
                 ts_GpsInfoData.Text = MultiLanguage.LanguageText("GPSInfoForm", "GPSInfoTitle");
+                ts_FilterTrackIds.Text = MultiLanguage.LanguageText("TrackFilterForm", "FilterIdTitle");
             }
             catch (Exception ex) { Log.Error($"MainForm LoadLanguage() Ex\r\n{ex.ToString()}"); }
         }
@@ -304,6 +313,7 @@ namespace UCM_Tools.Forms
         {
             if (UIMessageBoxEx.ShowMessageDialog($"{MultiLanguage.LanguageText("CurrencyInfo", "Determine")}", MultiLanguage.LanguageText("CurrencyInfo", "Prompt"), true, SunnyUIHelper.DefaultThreme))
             {
+                TrackFilterForm.FilterChanged -= OnFilterChanged;
                 timerFrame.Stop();
                 if (radar != null && radar._bOpen)
                     Stop();
@@ -942,8 +952,6 @@ namespace UCM_Tools.Forms
         }
 
         #region 核心变更
-        int textRefreshCounter = 0; // 文本刷新计数器
-        int trackTextSkipCounter = 0; // 跟踪文本跳帧计数器（2D文本模式下控制刷新频率）
         private void UpdatePointCloud(List<TargetInfo.RadarTargetInfoStruct> pointData = null, List<TargetInfo.RadarTargetInfoStruct> trackData = null, Dictionary<uint, Queue<TargetInfo.RadarTargetInfoStruct>> trackTrajectoriesTemp = null)
         {
             // 双重检查，防止Invoke延迟导致最小化后仍执行渲染
@@ -1719,7 +1727,11 @@ namespace UCM_Tools.Forms
                 }
             }
             lastRenderTime = DateTime.Now;
-            UpdatePointCloud(LoadTemp, TrackTemp);
+            var filterIds = SystemSetting.GetFilterTrackIdSet();
+            var filteredTrackTemp = (filterIds != null && TrackTemp != null)
+                ? TrackTemp.Where(t => filterIds.Contains(t.ID)).ToList()
+                : TrackTemp;
+            UpdatePointCloud(LoadTemp, filteredTrackTemp);
 
         }
 
@@ -2268,7 +2280,7 @@ namespace UCM_Tools.Forms
                 }
 
                 // 2. 移除已消失目标的Actor
-                var staleIds = trajectoryActors.Keys.Where(k => !trackTrajectories.ContainsKey(k)).ToList();
+                var staleIds = trajectoryActors.Keys.Where(k => !currentIds.Contains(k)).ToList();
                 foreach (var id in staleIds)
                 {
                     RemoveTrajectoryActor(id);
@@ -2893,6 +2905,34 @@ namespace UCM_Tools.Forms
             }
             gpsInfoForm = new GPSInfoForm();
             gpsInfoForm.Show();
+        }
+
+        private void ts_FilterTrackIds_Click(object sender, EventArgs e)
+        {
+            if (trackFilterForm != null && !trackFilterForm.IsDisposed)
+            {
+                if (trackFilterForm.WindowState == FormWindowState.Minimized)
+                    trackFilterForm.WindowState = FormWindowState.Normal;
+                trackFilterForm.Focus();
+                return;
+            }
+            trackFilterForm = new TrackFilterForm();
+            trackFilterForm.Show();
+        }
+
+        private void OnFilterChanged()
+        {
+            lock (trajectoryLock)
+            {
+                var filterSet = SystemSetting.GetFilterTrackIdSet();
+                if (filterSet != null)
+                {
+                    var staleIds = trajectoryActors.Keys
+                        .Where(k => !filterSet.Contains(k)).ToList();
+                    foreach (var id in staleIds)
+                        RemoveTrajectoryActor(id);
+                }
+            }
         }
 
         #endregion

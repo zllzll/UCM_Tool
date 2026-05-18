@@ -77,6 +77,7 @@
 		<Control name="Connected" text="设备连接成功" />
 		<Control name="Disconnected" text="设备连接失败" />
 		<Control name="Reconnecting" text="设备重连中" />
+		<Control name="FilterIdFormatError" text="目标ID格式错误，请输入数字和逗号，如:1,2,3,4，或留空" />
     </Controls>
   </Form>
   <Form>
@@ -204,6 +205,7 @@
 		<Control name="VideoPreview" text="视频预览" />
 		<Control name="XY2DView" text="XY俯视图预览" />
 		<Control name="GpsState" text="GPS状态" />
+		<Control name="ts_Theme" text="主题" />
     </Controls>
   </Form>
 
@@ -274,4 +276,15 @@
 		</Controls>
 	</Form>
 
+	<Form>
+		<!--跟踪ID过滤界面-->
+		<Name>TrackFilterForm</Name>
+		<Controls>
+			<Control name="FilterIdTitle" text="跟踪目标过滤" />
+			<Control name="lb_Title" text="输入要显示的目标ID（逗号分隔），留空则显示全部" />
+			<Control name="lb_Example" text="示例: 1,2,3,4 或 100,200" />
+			<Control name="btn_Save" text="保存" />
+			<Control name="btn_Cancel" text="取消" />
+		</Controls>
+	</Form>
 </Softimite>

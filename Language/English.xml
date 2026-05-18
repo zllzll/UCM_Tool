@@ -76,7 +76,8 @@
 			<Control name="UpgradeTip" text="Some radars waiting 30 seconds for radar restart after upgrade" />
 			<Control name="Connected" text="Connected" />
 			<Control name="Disconnected" text="Disconnected" />
-			<Control name="Reconnecting" text="Reconnecting" />
+			<Control name="Reconnecting" text="Reconnecting" />
+			<Control name="FilterIdFormatError" text="Invalid format. Use digits and commas, e.g.: 1,2,3,4, or leave empty" />
 		</Controls>
 	</Form>
 	<Form>
@@ -203,6 +204,7 @@
 			<Control name="VideoPreview" text="Video Preview" />
 			<Control name="XY2DView" text="XYView" />
 			<Control name="GpsState" text="Gps State" />
+			<Control name="ts_Theme" text="Themes" />
 		</Controls>
 	</Form>
 
@@ -263,13 +265,27 @@
 		<Controls>
 			<Control name="GPSInfoTitle" text="GPS Infomation" />
 			<Control name="GPSInfo" text="GPS Infomation Area" />
-			<Control name="Acc" text="加速度" />
-			<Control name="Av" text="角速度" />
-			<Control name="Longitude" text="纬度" />
-			<Control name="Latitude" text="经度" />
-			<Control name="Altitude" text="海拔高度" />
-			<Control name="Velocity" text="速度" />
-			<Control name="Declination" text="磁偏角" />
+			<Control name="Acc" text="Acc" />
+			<Control name="Av" text="Av" />
+			<Control name="Longitude" text="Longitude" />
+			<Control name="Latitude" text="Latitude" />
+			<Control name="Altitude" text="Altitude" />
+			<Control name="Velocity" text="Velocity" />
+			<Control name="Declination" text="Declination" />
 		</Controls>
 	</Form>
+	<Form>
+		<!--Target ID Filter-->
+		<Name>TrackFilterForm</Name>
+		<Controls>
+			<Control name="FilterIdTitle" text="Filter Target ID" />
+			<Control name="lb_Title" text="Enter target IDs separated by commas, leave blank to show all" />
+			<Control name="lb_Example" text="Example: 1,2,3,4 or 100,200" />
+			<Control name="btn_Save" text="Save" />
+			<Control name="btn_Cancel" text="Cancel" />
+		</Controls>
+	</Form>
+
+
+
 </Softimite>

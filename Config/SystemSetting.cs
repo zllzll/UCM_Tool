@@ -1290,6 +1290,41 @@ namespace UCM_Tools.Config
                 _RenderIntervalMs = value;
             }
         }
+        private static string _FilterTrackIds = "";
+        /// <summary>
+        /// 跟踪目标ID过滤，逗号分隔如"1,2,3,4"，留空显示全部
+        /// </summary>
+        public static string FilterTrackIds
+        {
+            get { return _FilterTrackIds; }
+            set
+            {
+                if (value != null)
+                {
+                    ConfigXML.SetKeyValue("FilterTrackIds", value);
+                    _FilterTrackIds = value;
+                    _CachedFilterTrackIdSet = null;
+                }
+            }
+        }
+        private static HashSet<uint> _CachedFilterTrackIdSet = null;
+        private static string _CachedFilterTrackIdsRaw = null;
+        public static HashSet<uint> GetFilterTrackIdSet()
+        {
+            string raw = _FilterTrackIds ?? "";
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+            if (_CachedFilterTrackIdSet != null && _CachedFilterTrackIdsRaw == raw)
+                return _CachedFilterTrackIdSet;
+            _CachedFilterTrackIdsRaw = raw;
+            _CachedFilterTrackIdSet = new HashSet<uint>();
+            foreach (var part in raw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (uint.TryParse(part.Trim(), out uint id))
+                    _CachedFilterTrackIdSet.Add(id);
+            }
+            return _CachedFilterTrackIdSet.Count > 0 ? _CachedFilterTrackIdSet : null;
+        }
         #endregion 跟踪轨迹相关参数
         private static int _GetTimeType = 0;
         /// <summary>
@@ -1454,6 +1489,7 @@ namespace UCM_Tools.Config
                 int.TryParse(ConfigXML.GetKeyString("ClearTrackTrajectoryType", "0"), out _ClearTrackTrajectoryType);
                 _TrackTrajectoryIncremental = bool.Parse(ConfigXML.GetKeyString("TrackTrajectoryIncremental", "true"));
                 int.TryParse(ConfigXML.GetKeyString("RenderIntervalMs", "0"), out _RenderIntervalMs);
+                _FilterTrackIds = ConfigXML.GetKeyString("FilterTrackIds", "");
                 #endregion 跟踪轨迹
                 int.TryParse(ConfigXML.GetKeyString("GetTimeType", "0"), out _GetTimeType);
                 _VTKBackColor = bool.Parse(ConfigXML.GetKeyString("VTKBackColor", "false"));

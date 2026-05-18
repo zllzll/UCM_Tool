@@ -105,11 +105,6 @@ namespace UCM_Tools.Forms
                         }
                         lineNum++;
                     }
-
-                            
-                    
-                    
-
                 }
                 catch (Exception ex)
                 {

@@ -166,6 +166,7 @@ namespace UCM_Tools.Forms
             // = this.Style;
             LoadTheme();
             LoadLanguage();
+            StatusMenuShow();
             FrameTimer();
             btn_DataReplay.Visible = SystemSetting.ShowDataReplay;
             btn_StopReplay.Visible = SystemSetting.ShowDataReplay;
@@ -517,7 +518,7 @@ namespace UCM_Tools.Forms
         {
             InitializeStaticContent(true);
 
-            StatusMenuShow();
+            
 
             DisplaySystemParams();
 
@@ -701,6 +702,7 @@ namespace UCM_Tools.Forms
             lb_DeviceIndexStrCAN.Text = SystemSetting.CAN_Index.ToString();
             lb_ChannelIndexStrCAN.Text = SystemSetting.CAN_Channel.ToString();
             lb_CANBaudStr.Text = EnumCls.GetEnumDescription(EnumCls.ConvertEnumToString<CAN_BAUD>((int)SystemSetting.CAN_Baud));
+            lb_ConnParamsAreaTitle.Text = MultiLanguage.LanguageText("ConnectSettingForm", "ConnectParams")+$"({(string.Compare(SystemSetting.ConnType, "CAN", false) == 0? SystemSetting.Zlg_Type: SystemSetting.ConnType)})";
             if (string.Compare(SystemSetting.ConnType, "TCP", false) == 0 || string.Compare(SystemSetting.ConnType, "UDP", false) == 0)
             {
                 pan_TCPParams.BringToFront();

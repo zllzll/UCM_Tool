@@ -46,7 +46,7 @@ namespace UCM_Tools.Radar.Communication
             }
             recv_data_thread = null;
             CAN_Function.CloseCAN(connParams);
-            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconneting: ConnState.Disconnected);// "重连中..." : "已手动断开连接");
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconnecting: ConnState.Disconnected);// "重连中..." : "已手动断开连接");
         }
 
 
@@ -149,7 +149,7 @@ namespace UCM_Tools.Radar.Communication
             _reconnectTimer = new Timer(async (state) =>
             {
                 _currentReconnnectCount++;
-                OnConnectStatusChanged?.Invoke(false, ConnState.Reconneting);
+                OnConnectStatusChanged?.Invoke(false, ConnState.Reconnecting);
                 await OpenDevice();
             }, null, _reconnectIntervalMs, Timeout.Infinite);
         }

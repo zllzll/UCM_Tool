@@ -37,7 +37,7 @@ namespace UCM_Tools.Radar.Communication
                 try { udpClient.Close(); } catch { }
                 udpClient = null;
             }
-            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconneting : ConnState.Disconnected);
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconnecting : ConnState.Disconnected);
         }
 
         public override async Task<bool> OpenDevice()
@@ -148,7 +148,7 @@ namespace UCM_Tools.Radar.Communication
             _reconnectTimer = new Timer(async (state) =>
             {
                 _currentReconnnectCount++;
-                OnConnectStatusChanged?.Invoke(false, ConnState.Reconneting);
+                OnConnectStatusChanged?.Invoke(false, ConnState.Reconnecting);
                 await OpenDevice();
             }, null, _reconnectIntervalMs, Timeout.Infinite);
         }

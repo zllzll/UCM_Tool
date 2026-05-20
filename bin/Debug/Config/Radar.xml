@@ -8,7 +8,7 @@
 		  <communication>COM,TCP</communication>
 	  </RadarType>
     <RadarType id="1" name="UCM211">
-      <communication>CAN,COM,TCP</communication>
+      <communication>CAN,COM,TCP,UDP</communication>
     </RadarType>
   </radar>
 </Project>

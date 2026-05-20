@@ -43,7 +43,7 @@ namespace UCM_Tools.Radar.Communication
             if (_serial != null)
                 _serial.Close();
             _serial = null;
-            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconneting : ConnState.Disconnected);// "重连中..." : "已手动断开连接");
+            OnConnectStatusChanged?.Invoke(false, _isReconnecting ? ConnState.Reconnecting : ConnState.Disconnected);// "重连中..." : "已手动断开连接");
         }
 
         public override async Task<bool> OpenDevice()
@@ -143,7 +143,7 @@ namespace UCM_Tools.Radar.Communication
             _reconnectTimer = new Timer(async (state) =>
             {
                 _currentReconnnectCount++;
-                OnConnectStatusChanged?.Invoke(false, ConnState.Reconneting);
+                OnConnectStatusChanged?.Invoke(false, ConnState.Reconnecting);
                 await OpenDevice();
             }, null, _reconnectIntervalMs, Timeout.Infinite);
         }

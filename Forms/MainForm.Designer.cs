@@ -2257,7 +2257,6 @@ namespace UCM_Tools.Forms
             this.pan_CANParams.Name = "pan_CANParams";
             this.pan_CANParams.Opacity = ((byte)(180));
             this.pan_CANParams.Radius = 10;
-            this.pan_CANParams.RadiusSides = Sunny.UI.UICornerRadiusSides.None;
             this.pan_CANParams.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.pan_CANParams.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.pan_CANParams.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.None;
@@ -4290,21 +4289,21 @@ namespace UCM_Tools.Forms
             this.ts_FilterTrackIds});
             this.uiContextMenuStrip1.Name = "uiContextMenuStrip1";
             this.uiContextMenuStrip1.ShowImageMargin = false;
-            this.uiContextMenuStrip1.Size = new System.Drawing.Size(156, 158);
+            this.uiContextMenuStrip1.Size = new System.Drawing.Size(135, 136);
             this.uiContextMenuStrip1.Style = Sunny.UI.UIStyle.Custom;
             // 
             // ts_Theme
             // 
             this.ts_Theme.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_Theme.Name = "ts_Theme";
-            this.ts_Theme.Size = new System.Drawing.Size(155, 22);
+            this.ts_Theme.Size = new System.Drawing.Size(134, 22);
             this.ts_Theme.Text = "主题";
             // 
             // menuItem_VideoPreview
             // 
             this.menuItem_VideoPreview.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.menuItem_VideoPreview.Name = "menuItem_VideoPreview";
-            this.menuItem_VideoPreview.Size = new System.Drawing.Size(155, 22);
+            this.menuItem_VideoPreview.Size = new System.Drawing.Size(134, 22);
             this.menuItem_VideoPreview.Text = "视频预览";
             this.menuItem_VideoPreview.Click += new System.EventHandler(this.menuItem_VideoPreview_Click);
             // 
@@ -4312,7 +4311,7 @@ namespace UCM_Tools.Forms
             // 
             this.ts_TrackData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_TrackData.Name = "ts_TrackData";
-            this.ts_TrackData.Size = new System.Drawing.Size(155, 22);
+            this.ts_TrackData.Size = new System.Drawing.Size(134, 22);
             this.ts_TrackData.Text = "俯视图(XY平面)";
             this.ts_TrackData.Click += new System.EventHandler(this.ts_TrackData_Click);
             // 
@@ -4324,7 +4323,7 @@ namespace UCM_Tools.Forms
             this.ts_RadarUpgrade_UCM211});
             this.ts_RadarFunction.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_RadarFunction.Name = "ts_RadarFunction";
-            this.ts_RadarFunction.Size = new System.Drawing.Size(155, 22);
+            this.ts_RadarFunction.Size = new System.Drawing.Size(134, 22);
             this.ts_RadarFunction.Text = "雷达功能";
             // 
             // ts_RadarAlive_SR75
@@ -4358,7 +4357,7 @@ namespace UCM_Tools.Forms
             // 
             this.ts_GpsInfoData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_GpsInfoData.Name = "ts_GpsInfoData";
-            this.ts_GpsInfoData.Size = new System.Drawing.Size(155, 22);
+            this.ts_GpsInfoData.Size = new System.Drawing.Size(134, 22);
             this.ts_GpsInfoData.Text = "GPS信息";
             this.ts_GpsInfoData.Click += new System.EventHandler(this.ts_GpsInfoData_Click);
             // 
@@ -4366,7 +4365,7 @@ namespace UCM_Tools.Forms
             // 
             this.ts_FilterTrackIds.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.ts_FilterTrackIds.Name = "ts_FilterTrackIds";
-            this.ts_FilterTrackIds.Size = new System.Drawing.Size(155, 22);
+            this.ts_FilterTrackIds.Size = new System.Drawing.Size(134, 22);
             this.ts_FilterTrackIds.Text = "过滤目标";
             this.ts_FilterTrackIds.Click += new System.EventHandler(this.ts_FilterTrackIds_Click);
             // 

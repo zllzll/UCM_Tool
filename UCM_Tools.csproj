@@ -227,6 +227,7 @@
     <Compile Include="Radar\Communication\Conn_COM.cs" />
     <Compile Include="Radar\Communication\Conn_CANFD.cs" />
     <Compile Include="Radar\Communication\Conn_TCP.cs" />
+    <Compile Include="Radar\Communication\Conn_UDP.cs" />
     <Compile Include="Radar\Communication\IConn.cs" />
     <Compile Include="Radar\ConnData.cs" />
     <Compile Include="Radar\Protocols\IProtocol.cs" />

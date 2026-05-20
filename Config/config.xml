@@ -6,6 +6,7 @@
 	  <argue key="SR75_TCP" value="Protocol_SR75CANFDToTCP" />
 	  <argue key="SR75(AFS721)_TCP" value="Protocol_SR75TCP_Object" />
 	  <argue key="UCM211_TCP" value="Protocol_UCM211_Bytes" />
+	  <argue key="UCM211_UDP" value="Protocol_UCM211_Bytes" />
 	  <argue key="UCM211_COM" value="Protocol_UCM211_Bytes" />
 	  <argue key="UCM211_CAN" value="Protocol_UCM211_CAN" />
   </Novasky>

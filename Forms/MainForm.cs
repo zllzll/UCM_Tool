@@ -701,7 +701,7 @@ namespace UCM_Tools.Forms
             lb_DeviceIndexStrCAN.Text = SystemSetting.CAN_Index.ToString();
             lb_ChannelIndexStrCAN.Text = SystemSetting.CAN_Channel.ToString();
             lb_CANBaudStr.Text = EnumCls.GetEnumDescription(EnumCls.ConvertEnumToString<CAN_BAUD>((int)SystemSetting.CAN_Baud));
-            if (string.Compare(SystemSetting.ConnType, "TCP", false) == 0)
+            if (string.Compare(SystemSetting.ConnType, "TCP", false) == 0 || string.Compare(SystemSetting.ConnType, "UDP", false) == 0)
             {
                 pan_TCPParams.BringToFront();
                 pan_TCPParams.Dock = DockStyle.Fill;
@@ -876,6 +876,8 @@ namespace UCM_Tools.Forms
                     ClearTrackTargets();
                     dynamicFollowerText.HideAll();
                     MsgForeColor(rtb_SystemMessage, message, "SUCCESS");
+                    // 重连后重新握手，触发雷达输出目标数据
+                    radar.SendCmd(RadarCommand.ReadSoftwareVersion);
                 }
                 else
                 {
@@ -2893,7 +2895,7 @@ namespace UCM_Tools.Forms
 
         #endregion
 
-        #region 2维跟踪目标
+        #region GPS信息
         private void ts_GpsInfoData_Click(object sender, EventArgs e)
         {
             if (gpsInfoForm != null && !gpsInfoForm.IsDisposed)
@@ -2906,7 +2908,9 @@ namespace UCM_Tools.Forms
             gpsInfoForm = new GPSInfoForm();
             gpsInfoForm.Show();
         }
+        #endregion GPS信息
 
+        #region 跟踪目标过滤
         private void ts_FilterTrackIds_Click(object sender, EventArgs e)
         {
             if (trackFilterForm != null && !trackFilterForm.IsDisposed)
@@ -2935,7 +2939,8 @@ namespace UCM_Tools.Forms
             }
         }
 
-        #endregion
+        #endregion 跟踪目标过滤
+
         #endregion 扩展功能
 
 

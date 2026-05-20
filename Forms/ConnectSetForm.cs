@@ -259,7 +259,7 @@ namespace UCM_Tools.Forms
                 uiPanel34.Height = 144;
                 this.Height = 323;
             }
-            else if (string.Compare("TCP", way, true) == 0)
+            else if (string.Compare("TCP", way, true) == 0 || string.Compare("UDP", way, true) == 0)
             {
                 pan_TCP.BringToFront();
                 uiPanel34.Height = 61;
@@ -286,7 +286,7 @@ namespace UCM_Tools.Forms
                     //雷达型号和通讯类型为空
                     return;
                 }
-                if(string.Compare(cmb_ConnType.Text, "TCP", true) == 0)
+                if(string.Compare(cmb_ConnType.Text, "TCP", true) == 0 || string.Compare(cmb_ConnType.Text, "UDP", true) == 0)
                 {
                     string ip = tb_DeviceAddress.Text;
                     int port = tb_DevicePort.IntValue;
@@ -295,7 +295,7 @@ namespace UCM_Tools.Forms
                         UIMessageBoxEx.ShowMessageDialog(MultiLanguage.LanguageText("ErrorInfo", "ConnParamsError"), MultiLanguage.LanguageText("CurrencyInfo", "Prompt"), false, SunnyUIHelper.DefaultThreme);
                         return;
                     }
-                    SystemSetting.ConnType = "TCP";
+                    SystemSetting.ConnType = cmb_ConnType.Text.ToUpper();
                     SystemSetting.TCP_IP = ip;
                     SystemSetting.TCP_Port = port;
                     SystemSetting.Zlg_CAN_Type = cmb_DeviceType.Text;

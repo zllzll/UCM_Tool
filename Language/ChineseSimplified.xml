@@ -206,6 +206,8 @@
 		<Control name="XY2DView" text="XY俯视图预览" />
 		<Control name="GpsState" text="GPS状态" />
 		<Control name="ts_Theme" text="主题" />
+		<Control name="InfoView" text="信息查看" />
+		<Control name="FcState" text="飞控状态" />
     </Controls>
   </Form>
 
@@ -273,6 +275,29 @@
 			<Control name="Altitude" text="海拔高度" />
 			<Control name="Velocity" text="速度" />
 			<Control name="Declination" text="磁偏角" />
+		</Controls>
+	</Form>
+	<Form>
+		<!--飞控信息-->
+		<Name>FCInfoForm</Name>
+		<Controls>
+			<Control name="FCInfoTitle" text="飞控信息" />
+			<Control name="FCInfo" text="飞控信息展示区" />
+			<Control name="GPSLocValid" text="GPS位置有效" />
+			<Control name="UAVAttitude" text="无人机姿态有效" />
+			<Control name="Longitude" text="纬度" />
+			<Control name="Latitude" text="经度" />
+			<Control name="Altitude" text="海拔高度" />
+			<Control name="AGL" text="相对地面高度" />
+			<Control name="VN" text="朝北运行速度" />
+			<Control name="VE" text="朝东运行速度" />
+			<Control name="VD" text="朝下运行速度" />
+			<Control name="RollAngle" text="翻滚角" />
+			<Control name="PitchAngle" text="俯仰角" />
+			<Control name="YawAngle" text="航向角" />
+			<Control name="RollSpeed" text="翻滚角" />
+			<Control name="PitchSpeed" text="俯仰角" />
+			<Control name="YawSpeed" text="航向角" />
 		</Controls>
 	</Form>
 

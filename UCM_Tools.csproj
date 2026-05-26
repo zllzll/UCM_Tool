@@ -157,6 +157,12 @@
     <Compile Include="Forms\FormTest.Designer.cs">
       <DependentUpon>FormTest.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\FCInfoForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\FCInfoForm.Designer.cs">
+      <DependentUpon>FCInfoForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\RadarUpgradeForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -266,6 +272,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\FormTest.resx">
       <DependentUpon>FormTest.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\FCInfoForm.resx">
+      <DependentUpon>FCInfoForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\RadarUpgradeForm.resx">
       <DependentUpon>RadarUpgradeForm.cs</DependentUpon>

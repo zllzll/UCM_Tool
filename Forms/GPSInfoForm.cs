@@ -58,8 +58,9 @@ namespace UCM_Tools.Forms
             SunnyUIHelper.SetTheme(this, SystemSetting.ThemeColor);
 
             LoadLanguage();
-            
+            ClearControlValue();
             MainForm.gpsInfoDataReceived += new MainForm.GpsInfoDataDelegate(ReceiveData);
+            MainForm.connInfoDataReceived += new MainForm.ConnInfoDataDelegate(ReceiveConnData);
         }
 
         private void LoadLanguage()
@@ -119,6 +120,36 @@ namespace UCM_Tools.Forms
                 Log.Error($"SetValueToGraph Ex\r\n{ex.ToString()}");
             }
         }
+        private void ReceiveConnData(ConnState dataConn)
+        {
+            if (dataConn != ConnState.Connected)
+            {
+                this.BeginInvoke((EventHandler)delegate
+                {
+                    ClearControlValue();
+                });
+            }
+        }
+        private void ClearControlValue()
+        {
+            lb_AccX1.Text = "---";
+            lb_AccY1.Text = "---";
+            lb_AccZ1.Text = "---";
+            lb_AvX1.Text = "---";
+            lb_AvY1.Text = "---";
+            lb_AvZ1.Text = "---";
+            lb_AccX2.Text = "---";
+            lb_AccY2.Text = "---";
+            lb_AccZ2.Text = "---";
+            lb_AvX2.Text = "---";
+            lb_AvY2.Text = "---";
+            lb_AvZ2.Text = "---";
+            lb_GpsLong.Text = "---";
+            lb_GpsLat.Text = "---";
+            lb_GpsHeight.Text = "---";
+            lb_GpsSpeed.Text = "---";
+            lb_GpsDeclination.Text = "---";
+        }
 
         private void GPSInfoForm_FormClosing(object sender, FormClosingEventArgs e)
         {
@@ -127,7 +158,8 @@ namespace UCM_Tools.Forms
 
         public void FormDispose()
         {
-            MainForm.gpsInfoDataReceived -= new MainForm.GpsInfoDataDelegate(ReceiveData);
+            MainForm.gpsInfoDataReceived -= ReceiveData;
+            MainForm.connInfoDataReceived -= ReceiveConnData;
         }
     }
 }

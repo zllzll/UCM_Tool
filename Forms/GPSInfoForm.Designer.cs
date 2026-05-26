@@ -327,6 +327,7 @@
             this.lb_GpsDeclination.Size = new System.Drawing.Size(142, 23);
             this.lb_GpsDeclination.Style = Sunny.UI.UIStyle.Custom;
             this.lb_GpsDeclination.TabIndex = 1;
+            this.lb_GpsDeclination.Text = "---";
             this.lb_GpsDeclination.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel57
@@ -460,6 +461,7 @@
             this.lb_GpsSpeed.Size = new System.Drawing.Size(142, 23);
             this.lb_GpsSpeed.Style = Sunny.UI.UIStyle.Custom;
             this.lb_GpsSpeed.TabIndex = 1;
+            this.lb_GpsSpeed.Text = "---";
             this.lb_GpsSpeed.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel40
@@ -593,6 +595,7 @@
             this.lb_GpsHeight.Size = new System.Drawing.Size(142, 23);
             this.lb_GpsHeight.Style = Sunny.UI.UIStyle.Custom;
             this.lb_GpsHeight.TabIndex = 1;
+            this.lb_GpsHeight.Text = "---";
             this.lb_GpsHeight.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel36
@@ -726,6 +729,7 @@
             this.lb_GpsLat.Size = new System.Drawing.Size(142, 23);
             this.lb_GpsLat.Style = Sunny.UI.UIStyle.Custom;
             this.lb_GpsLat.TabIndex = 1;
+            this.lb_GpsLat.Text = "---";
             this.lb_GpsLat.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel32
@@ -859,6 +863,7 @@
             this.lb_GpsLong.Size = new System.Drawing.Size(142, 23);
             this.lb_GpsLong.Style = Sunny.UI.UIStyle.Custom;
             this.lb_GpsLong.TabIndex = 1;
+            this.lb_GpsLong.Text = "---";
             this.lb_GpsLong.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel28
@@ -992,6 +997,7 @@
             this.lb_AvZ2.Size = new System.Drawing.Size(142, 23);
             this.lb_AvZ2.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AvZ2.TabIndex = 1;
+            this.lb_AvZ2.Text = "---";
             this.lb_AvZ2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel24
@@ -1125,6 +1131,7 @@
             this.lb_AvY2.Size = new System.Drawing.Size(142, 23);
             this.lb_AvY2.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AvY2.TabIndex = 1;
+            this.lb_AvY2.Text = "---";
             this.lb_AvY2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel20
@@ -1258,6 +1265,7 @@
             this.lb_AvX2.Size = new System.Drawing.Size(142, 23);
             this.lb_AvX2.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AvX2.TabIndex = 1;
+            this.lb_AvX2.Text = "---";
             this.lb_AvX2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel16
@@ -1391,6 +1399,7 @@
             this.lb_AccZ2.Size = new System.Drawing.Size(142, 23);
             this.lb_AccZ2.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AccZ2.TabIndex = 1;
+            this.lb_AccZ2.Text = "---";
             this.lb_AccZ2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel12
@@ -1524,6 +1533,7 @@
             this.lb_AccY2.Size = new System.Drawing.Size(142, 23);
             this.lb_AccY2.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AccY2.TabIndex = 1;
+            this.lb_AccY2.Text = "---";
             this.lb_AccY2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel3
@@ -1657,6 +1667,7 @@
             this.lb_AccX2.Size = new System.Drawing.Size(142, 23);
             this.lb_AccX2.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AccX2.TabIndex = 1;
+            this.lb_AccX2.Text = "---";
             this.lb_AccX2.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel10
@@ -1790,6 +1801,7 @@
             this.lb_AvZ1.Size = new System.Drawing.Size(142, 23);
             this.lb_AvZ1.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AvZ1.TabIndex = 1;
+            this.lb_AvZ1.Text = "---";
             this.lb_AvZ1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel45
@@ -1923,6 +1935,7 @@
             this.lb_AvY1.Size = new System.Drawing.Size(142, 23);
             this.lb_AvY1.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AvY1.TabIndex = 1;
+            this.lb_AvY1.Text = "---";
             this.lb_AvY1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel53
@@ -2056,6 +2069,7 @@
             this.lb_AvX1.Size = new System.Drawing.Size(142, 23);
             this.lb_AvX1.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AvX1.TabIndex = 1;
+            this.lb_AvX1.Text = "---";
             this.lb_AvX1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel95
@@ -2189,6 +2203,7 @@
             this.lb_AccZ1.Size = new System.Drawing.Size(142, 23);
             this.lb_AccZ1.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AccZ1.TabIndex = 1;
+            this.lb_AccZ1.Text = "---";
             this.lb_AccZ1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel70
@@ -2322,6 +2337,7 @@
             this.lb_AccY1.Size = new System.Drawing.Size(142, 23);
             this.lb_AccY1.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AccY1.TabIndex = 1;
+            this.lb_AccY1.Text = "---";
             this.lb_AccY1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel49
@@ -2455,6 +2471,7 @@
             this.lb_AccX1.Size = new System.Drawing.Size(142, 23);
             this.lb_AccX1.Style = Sunny.UI.UIStyle.Custom;
             this.lb_AccX1.TabIndex = 1;
+            this.lb_AccX1.Text = "---";
             this.lb_AccX1.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // uiPanel66

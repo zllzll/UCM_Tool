@@ -106,13 +106,13 @@ namespace UCM_Tools.Radar.Protocols
         /// <summary>
         /// 周期内点云和跟踪目标委托
         /// </summary>
-        public delegate void TarAndClusterPointCloud(string time, List<TargetInfo.RadarTargetInfoStruct> targetInfoList, List<TargetInfo.RadarTargetInfoStruct> clusterInfoList, IMUAndGPSData imuAndGpsData = null);
+        public delegate void TarAndClusterPointCloud(string time, List<TargetInfo.RadarTargetInfoStruct> targetInfoList, List<TargetInfo.RadarTargetInfoStruct> clusterInfoList, IMUAndGPSData imuAndGpsData = null,FCData fCData = null);
         [method: CompilerGenerated]
         public event TarAndClusterPointCloud tarAndClusterPointCloud;
-        public void OnTarAndClusterPointCloudEvent(string time, List<TargetInfo.RadarTargetInfoStruct> targetInfoList, List<TargetInfo.RadarTargetInfoStruct> clusterInfoList, IMUAndGPSData imuAndGpsData = null)
+        public void OnTarAndClusterPointCloudEvent(string time, List<TargetInfo.RadarTargetInfoStruct> targetInfoList, List<TargetInfo.RadarTargetInfoStruct> clusterInfoList, IMUAndGPSData imuAndGpsData = null, FCData fCData = null)
         {
             if (tarAndClusterPointCloud != null)
-                tarAndClusterPointCloud(time,targetInfoList, clusterInfoList, imuAndGpsData);
+                tarAndClusterPointCloud(time,targetInfoList, clusterInfoList, imuAndGpsData,fCData);
         }
         /// <summary>
         /// UCM211参数回复委托

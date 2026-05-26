@@ -1,6 +1,7 @@
 ﻿using CommonLib;
 using Kitware.VTK;
 using LogProc;
+using Sunny.UI.Win32;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -31,11 +32,14 @@ namespace UCM_Tools.Radar.Protocols
         private const byte CLUSTER_DATA_TY1 = 0x9A;
         private const byte EX_ALOG_DATA_TY0 = 0xA3;
         private const byte EX_ALOG_DATA_TY1 = 0x3A;
+        private const byte EX_FC_DATA_TY0 = 0xA2;
+        private const byte EX_FC_DATA_TY1 = 0x2A;
         private double ACC_SCALE = 0.004788;//加速度缩放因子
         private double AV_SCALE = 0.001065;//角速度缩放因子
         private double GPS_LAT_LONG_SCALE = Math.Pow(10,-7);//GPS经纬度缩放因子
         private double GPS_HEIGHT_SCALE = 0.001;//GPS海拔高度缩放因子
         private double GPS_SPEED_SCALE = 0.01;//GP速度和偏磁角缩放因子
+        private double UAV_ANGLE_SCALE = 0.0001;//无人机角度缩放因子
 
         Thread thread = null;
         bool isHandle = false;
@@ -46,6 +50,7 @@ namespace UCM_Tools.Radar.Protocols
         public const int minRespFrameLength = 24;//回复帧最小24
         private const int minTarFrameLength = 25;//目标帧在无跟踪和点云信息时 2字节总帧头+2字节总帧长度 + 汇总信息总长度(24个字节) + 1字节总校验和  30
         private const int ExtendAlogModeLen = 45;//算法模块扩展数据总长度
+        private const int ExtendFcModeLen = 41;//35;//飞控模块扩展数据总长度 41
         public Protocol_UCM211_Bytes()
         {
             curTarNum = 0;
@@ -200,7 +205,8 @@ namespace UCM_Tools.Radar.Protocols
                         byte[] baseData = buff.Skip(4).Take(dataBaseLen).ToArray();
                         int baseIndex = 3;//基础模块信息
                         int dataStatus = baseData[baseIndex] & 0x01;
-                        int dataExtend = (baseData[baseIndex] & 0x02)>> 1;
+                        int dataExtend = (baseData[baseIndex] & 0x02)>> 1;//GPS扩展模块有效
+                        int dataFCExtend = (baseData[baseIndex] & 0x04)>> 2;//飞控信息模块有效
                         baseIndex++;
                         int TarNum = baseData[baseIndex]; //目标数量
                         baseIndex += 1;
@@ -231,7 +237,7 @@ namespace UCM_Tools.Radar.Protocols
                         int clusterLenForBaseData = ((clusterNum == 0 || perTarByteNumCluster == 0) ? 0 : clusterNum * perTarByteNumCluster + 5);
                         byte baseDataCheck = baseData[baseIndex];
                         baseIndex++;
-                        int dataTotalLength = dataBaseLen + tarLenForBaseData + clusterLenForBaseData + (dataExtend == 0x01 ? ExtendAlogModeLen : 0);
+                        int dataTotalLength = dataBaseLen + tarLenForBaseData + clusterLenForBaseData + (dataExtend == 0x01 ? ExtendAlogModeLen : 0) + (dataFCExtend == 0x01 ? ExtendFcModeLen : 0);
 
                         if (dataTotalLength != dataModelTotalLen || baseDataCheck != PubClass.GetCheckSum(baseData, 0, dataBaseLen - 1))//总数据长度和基础模块算出来的长度需相等且基础模块校验通过
                         {
@@ -321,7 +327,7 @@ namespace UCM_Tools.Radar.Protocols
                                 buff = buff.Skip(first).Take(buff.Length - first).ToArray();
                                 continue;
                             }
-                            int exAlogBaseLen = BitConverter.ToUInt16(buff, totalIndex + 2);//整个点云信息模块数据长度，包括信息帧头、基本信息、模块数据长度以及校验和
+                            int exAlogBaseLen = BitConverter.ToUInt16(buff, totalIndex + 2);
                             byte[] exAlogBaseData = buff.Skip(totalIndex).Take(exAlogBaseLen).ToArray();
                             if (ExtendAlogModeLen != exAlogBaseLen || exAlogBaseData[exAlogBaseLen - 1] != PubClass.GetCheckSum(exAlogBaseData, 0, exAlogBaseLen - 1))
                             {
@@ -336,6 +342,36 @@ namespace UCM_Tools.Radar.Protocols
                                 continue;
                             }
                             totalIndex += exAlogBaseLen;
+                        }
+                        if(dataFCExtend == 0x01)//表示有算法扩展数据模块
+                        {
+                            if (buff[totalIndex] != EX_FC_DATA_TY0 || buff[totalIndex + 1] != EX_FC_DATA_TY1)
+                            {
+                                first = Array.IndexOf(buff, HEAD_TY0, first + 1);
+                                if (first < 0)
+                                {
+                                    Array.Resize(ref buff, 0);
+                                    bytes = buff.ToList();
+                                    return;
+                                }
+                                buff = buff.Skip(first).Take(buff.Length - first).ToArray();
+                                continue;
+                            }
+                            int exFcBaseLen = BitConverter.ToUInt16(buff, totalIndex + 2);
+                            byte[] exFcBaseData = buff.Skip(totalIndex).Take(exFcBaseLen).ToArray();
+                            if (ExtendFcModeLen != exFcBaseLen || exFcBaseData[exFcBaseLen - 1] != PubClass.GetCheckSum(exFcBaseData, 0, exFcBaseLen - 1))
+                            {
+                                first = Array.IndexOf(buff, HEAD_TY0, first + 1);
+                                if (first < 0)
+                                {
+                                    Array.Resize(ref buff, 0);
+                                    bytes = buff.ToList();
+                                    return;
+                                }
+                                buff = buff.Skip(first).Take(buff.Length - first).ToArray();
+                                continue;
+                            }
+                            totalIndex += exFcBaseLen;
                         }
                         totalIndex++;
                         byte[] result = new byte[totalIndex];
@@ -428,6 +464,7 @@ namespace UCM_Tools.Radar.Protocols
                     index++;
                     int dataStatus = bytes[index] & 0x01;
                     int dataExtend = (bytes[index] & 0x02)>>1;
+                    int dataFcExtend = (bytes[index] & 0x04)>>2;
                     index++;
                     int TarNum = bytes[index];//目标数量
                     index += 1;
@@ -631,7 +668,64 @@ namespace UCM_Tools.Radar.Protocols
                             GpsSpeed = gpsSpeed,
                             GpsDeclination = gpsDeclination
                         };
-
+                        index++;
+                    }
+                    FCData fcData = null;
+                    if (dataFcExtend == 0x01)
+                    {
+                        index += 2;//跳过扩展模块帧头；
+                        int exAlogModelLen = BitConverter.ToUInt16(bytes, index); //扩展模块总数据长度
+                        index += 2;
+                        ushort flag = BitConverter.ToUInt16(bytes, index);
+                        bool gpsLocValid = (flag & 0x01) == 0x01;
+                        bool uavAttitudeValid = ((flag & 0x02) >> 1) == 0x01;
+                        index+=2;
+                        double gpsLong = BitConverter.ToInt32(bytes, index) * GPS_LAT_LONG_SCALE;
+                        index += 4;
+                        double gpsLat = BitConverter.ToInt32(bytes, index) * GPS_LAT_LONG_SCALE;
+                        index += 4;
+                        double gpsHeight = BitConverter.ToInt32(bytes, index) * GPS_HEIGHT_SCALE;
+                        index += 4;
+                        double agl = BitConverter.ToInt32(bytes, index) * GPS_HEIGHT_SCALE;
+                        index += 4;
+                        double vn = BitConverter.ToInt16(bytes, index) * GPS_SPEED_SCALE;
+                        index += 2;
+                        double ve = BitConverter.ToInt16(bytes, index) * GPS_SPEED_SCALE;
+                        index += 2;
+                        double vd = BitConverter.ToInt16(bytes, index) * GPS_SPEED_SCALE;
+                        index += 2;
+                        double roll = BitConverter.ToInt16(bytes, index) * UAV_ANGLE_SCALE;
+                        index += 2;
+                        double pitch = BitConverter.ToInt16(bytes, index) * UAV_ANGLE_SCALE;
+                        index += 2;
+                        double yaw = BitConverter.ToInt16(bytes, index) * UAV_ANGLE_SCALE;
+                        index += 2;
+                        //这里放开，EX_FC_LENGTH需要为41
+                        double rollSpeed = BitConverter.ToInt16(bytes, index) * UAV_ANGLE_SCALE;
+                        index += 2;
+                        double pitchSpeed = BitConverter.ToInt16(bytes, index) * UAV_ANGLE_SCALE;
+                        index += 2;
+                        double yawSpeed = BitConverter.ToInt16(bytes, index) * UAV_ANGLE_SCALE;
+                        index += 2;
+                        fcData = new FCData()
+                        {
+                            GpsLocValid = gpsLocValid,
+                            UavAttitudeValid = uavAttitudeValid,
+                            GpsLong = gpsLong,
+                            GpsLat = gpsLat,
+                            GpsHeight = gpsHeight,
+                            AGL = agl,
+                            VN = vn,
+                            VE = ve,
+                            VD = vd,
+                            RollAngle = roll,
+                            PitchAngle = pitch,
+                            YawAngle = yaw,
+                            RollSpeed = rollSpeed,
+                            PitchSpeed = pitchSpeed,
+                            YawSpeed = yawSpeed
+                        };
+                        index++;
                     }
                     byte totalCheck = bytes[index];//总校验和
                     if (simulateData)
@@ -676,7 +770,7 @@ namespace UCM_Tools.Radar.Protocols
                         if (num % 100 == 0)
                             tarIDtemp = (uint)random.Next(0, 11);
                     }
-                    OnTarAndClusterPointCloudEvent(time, radarTarList, radarClusterList, iMUAndGPSData);
+                    OnTarAndClusterPointCloudEvent(time, radarTarList, radarClusterList, iMUAndGPSData,fcData);
                     OnPointCloudSaveDataEvent(pointList, trackList);
                 }
                 else if (type == 1) //回复帧

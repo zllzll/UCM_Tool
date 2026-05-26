@@ -66,6 +66,12 @@ namespace UCM_Tools.Forms
             this.lb_ControlAreaTitle = new Sunny.UI.UILabel();
             this.uiPanel2 = new Sunny.UI.UIPanel();
             this.uiPanel4 = new Sunny.UI.UIPanel();
+            this.uiPanel16 = new Sunny.UI.UIPanel();
+            this.uiPanel97 = new Sunny.UI.UIPanel();
+            this.lb_Fc = new Sunny.UI.UILabel();
+            this.uiPanel98 = new Sunny.UI.UIPanel();
+            this.uiPanel99 = new Sunny.UI.UIPanel();
+            this.lb_FcText = new Sunny.UI.UILabel();
             this.uiPanel7 = new Sunny.UI.UIPanel();
             this.uiPanel9 = new Sunny.UI.UIPanel();
             this.lb_Gps = new Sunny.UI.UILabel();
@@ -213,8 +219,10 @@ namespace UCM_Tools.Forms
             this.ts_RadarAlive_SR75 = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_RadarUpgrade_SR75 = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_RadarUpgrade_UCM211 = new System.Windows.Forms.ToolStripMenuItem();
-            this.ts_GpsInfoData = new System.Windows.Forms.ToolStripMenuItem();
             this.ts_FilterTrackIds = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_ShowInfo = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_GpsInfoData = new System.Windows.Forms.ToolStripMenuItem();
+            this.ts_FcInfoData = new System.Windows.Forms.ToolStripMenuItem();
             this.pan_Main.SuspendLayout();
             this.pan_Right.SuspendLayout();
             this.pan_Left.SuspendLayout();
@@ -229,6 +237,9 @@ namespace UCM_Tools.Forms
             this.uiPanel13.SuspendLayout();
             this.uiPanel15.SuspendLayout();
             this.uiPanel4.SuspendLayout();
+            this.uiPanel16.SuspendLayout();
+            this.uiPanel97.SuspendLayout();
+            this.uiPanel99.SuspendLayout();
             this.uiPanel7.SuspendLayout();
             this.uiPanel9.SuspendLayout();
             this.uiPanel11.SuspendLayout();
@@ -443,7 +454,7 @@ namespace UCM_Tools.Forms
             this.uiPanel56.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.uiPanel56.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.uiPanel56.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.uiPanel56.Location = new System.Drawing.Point(0, 610);
+            this.uiPanel56.Location = new System.Drawing.Point(0, 618);
             this.uiPanel56.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.uiPanel56.MinimumSize = new System.Drawing.Size(1, 1);
             this.uiPanel56.Name = "uiPanel56";
@@ -452,7 +463,7 @@ namespace UCM_Tools.Forms
             this.uiPanel56.Radius = 10;
             this.uiPanel56.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.uiPanel56.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.uiPanel56.Size = new System.Drawing.Size(300, 135);
+            this.uiPanel56.Size = new System.Drawing.Size(300, 127);
             this.uiPanel56.Style = Sunny.UI.UIStyle.Custom;
             this.uiPanel56.TabIndex = 18;
             this.uiPanel56.Text = null;
@@ -481,7 +492,7 @@ namespace UCM_Tools.Forms
             this.uiPanel57.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.uiPanel57.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.uiPanel57.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.None;
-            this.uiPanel57.Size = new System.Drawing.Size(280, 115);
+            this.uiPanel57.Size = new System.Drawing.Size(280, 107);
             this.uiPanel57.Style = Sunny.UI.UIStyle.Custom;
             this.uiPanel57.TabIndex = 6;
             this.uiPanel57.Text = null;
@@ -508,7 +519,7 @@ namespace UCM_Tools.Forms
             this.rtb_SystemMessage.ScrollBarColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.rtb_SystemMessage.ScrollBarStyleInherited = false;
             this.rtb_SystemMessage.ShowText = false;
-            this.rtb_SystemMessage.Size = new System.Drawing.Size(280, 84);
+            this.rtb_SystemMessage.Size = new System.Drawing.Size(280, 76);
             this.rtb_SystemMessage.Style = Sunny.UI.UIStyle.Custom;
             this.rtb_SystemMessage.TabIndex = 10;
             this.rtb_SystemMessage.TextAlignment = System.Drawing.ContentAlignment.TopLeft;
@@ -561,7 +572,7 @@ namespace UCM_Tools.Forms
             this.uiPanel55.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.uiPanel55.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.uiPanel55.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.uiPanel55.Location = new System.Drawing.Point(0, 600);
+            this.uiPanel55.Location = new System.Drawing.Point(0, 608);
             this.uiPanel55.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.uiPanel55.MinimumSize = new System.Drawing.Size(1, 1);
             this.uiPanel55.Name = "uiPanel55";
@@ -587,7 +598,7 @@ namespace UCM_Tools.Forms
             this.pan_ControlArea.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.pan_ControlArea.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.pan_ControlArea.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.pan_ControlArea.Location = new System.Drawing.Point(0, 468);
+            this.pan_ControlArea.Location = new System.Drawing.Point(0, 476);
             this.pan_ControlArea.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.pan_ControlArea.MinimumSize = new System.Drawing.Size(1, 1);
             this.pan_ControlArea.Name = "pan_ControlArea";
@@ -1050,7 +1061,7 @@ namespace UCM_Tools.Forms
             this.uiPanel2.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.uiPanel2.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
             this.uiPanel2.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.uiPanel2.Location = new System.Drawing.Point(0, 458);
+            this.uiPanel2.Location = new System.Drawing.Point(0, 466);
             this.uiPanel2.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
             this.uiPanel2.MinimumSize = new System.Drawing.Size(1, 1);
             this.uiPanel2.Name = "uiPanel2";
@@ -1067,6 +1078,7 @@ namespace UCM_Tools.Forms
             // uiPanel4
             // 
             this.uiPanel4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel4.Controls.Add(this.uiPanel16);
             this.uiPanel4.Controls.Add(this.uiPanel7);
             this.uiPanel4.Controls.Add(this.uiPanel43);
             this.uiPanel4.Controls.Add(this.uiPanel51);
@@ -1092,11 +1104,145 @@ namespace UCM_Tools.Forms
             this.uiPanel4.Radius = 10;
             this.uiPanel4.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
             this.uiPanel4.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
-            this.uiPanel4.Size = new System.Drawing.Size(300, 237);
+            this.uiPanel4.Size = new System.Drawing.Size(300, 245);
             this.uiPanel4.Style = Sunny.UI.UIStyle.Custom;
             this.uiPanel4.TabIndex = 12;
             this.uiPanel4.Text = null;
             this.uiPanel4.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // uiPanel16
+            // 
+            this.uiPanel16.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel16.Controls.Add(this.uiPanel97);
+            this.uiPanel16.Controls.Add(this.uiPanel98);
+            this.uiPanel16.Controls.Add(this.uiPanel99);
+            this.uiPanel16.Dock = System.Windows.Forms.DockStyle.Top;
+            this.uiPanel16.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel16.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel16.FillDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel16.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.uiPanel16.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.uiPanel16.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.uiPanel16.Location = new System.Drawing.Point(10, 216);
+            this.uiPanel16.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiPanel16.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiPanel16.Name = "uiPanel16";
+            this.uiPanel16.Opacity = ((byte)(180));
+            this.uiPanel16.Padding = new System.Windows.Forms.Padding(0, 0, 0, 2);
+            this.uiPanel16.Radius = 1;
+            this.uiPanel16.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel16.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel16.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Bottom;
+            this.uiPanel16.Size = new System.Drawing.Size(280, 25);
+            this.uiPanel16.Style = Sunny.UI.UIStyle.Custom;
+            this.uiPanel16.TabIndex = 26;
+            this.uiPanel16.Text = null;
+            this.uiPanel16.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // uiPanel97
+            // 
+            this.uiPanel97.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel97.Controls.Add(this.lb_Fc);
+            this.uiPanel97.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.uiPanel97.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel97.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel97.FillDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel97.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.uiPanel97.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.uiPanel97.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.uiPanel97.Location = new System.Drawing.Point(145, 0);
+            this.uiPanel97.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiPanel97.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiPanel97.Name = "uiPanel97";
+            this.uiPanel97.Opacity = ((byte)(180));
+            this.uiPanel97.Radius = 10;
+            this.uiPanel97.RadiusSides = Sunny.UI.UICornerRadiusSides.None;
+            this.uiPanel97.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel97.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel97.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.None;
+            this.uiPanel97.Size = new System.Drawing.Size(135, 23);
+            this.uiPanel97.Style = Sunny.UI.UIStyle.Custom;
+            this.uiPanel97.TabIndex = 11;
+            this.uiPanel97.Text = null;
+            this.uiPanel97.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // lb_Fc
+            // 
+            this.lb_Fc.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lb_Fc.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Bold);
+            this.lb_Fc.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.lb_Fc.Location = new System.Drawing.Point(0, 0);
+            this.lb_Fc.Name = "lb_Fc";
+            this.lb_Fc.Size = new System.Drawing.Size(135, 23);
+            this.lb_Fc.Style = Sunny.UI.UIStyle.Custom;
+            this.lb_Fc.TabIndex = 1;
+            this.lb_Fc.Text = "Invalid";
+            this.lb_Fc.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // uiPanel98
+            // 
+            this.uiPanel98.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel98.Dock = System.Windows.Forms.DockStyle.Left;
+            this.uiPanel98.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel98.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel98.FillDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel98.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.uiPanel98.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.uiPanel98.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.uiPanel98.Location = new System.Drawing.Point(135, 0);
+            this.uiPanel98.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiPanel98.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiPanel98.Name = "uiPanel98";
+            this.uiPanel98.Opacity = ((byte)(180));
+            this.uiPanel98.Radius = 10;
+            this.uiPanel98.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel98.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel98.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.None;
+            this.uiPanel98.Size = new System.Drawing.Size(10, 23);
+            this.uiPanel98.Style = Sunny.UI.UIStyle.Custom;
+            this.uiPanel98.TabIndex = 10;
+            this.uiPanel98.Text = null;
+            this.uiPanel98.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // uiPanel99
+            // 
+            this.uiPanel99.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel99.Controls.Add(this.lb_FcText);
+            this.uiPanel99.Dock = System.Windows.Forms.DockStyle.Left;
+            this.uiPanel99.FillColor = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel99.FillColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(20)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel99.FillDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel99.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.uiPanel99.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.uiPanel99.ForeDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(128)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.uiPanel99.Location = new System.Drawing.Point(0, 0);
+            this.uiPanel99.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            this.uiPanel99.MinimumSize = new System.Drawing.Size(1, 1);
+            this.uiPanel99.Name = "uiPanel99";
+            this.uiPanel99.Opacity = ((byte)(180));
+            this.uiPanel99.Radius = 10;
+            this.uiPanel99.RadiusSides = Sunny.UI.UICornerRadiusSides.None;
+            this.uiPanel99.RectColor = System.Drawing.Color.FromArgb(((int)(((byte)(150)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel99.RectDisableColor = System.Drawing.Color.FromArgb(((int)(((byte)(80)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))));
+            this.uiPanel99.RectSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.None;
+            this.uiPanel99.Size = new System.Drawing.Size(135, 23);
+            this.uiPanel99.Style = Sunny.UI.UIStyle.Custom;
+            this.uiPanel99.TabIndex = 9;
+            this.uiPanel99.Text = null;
+            this.uiPanel99.TextAlignment = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // lb_FcText
+            // 
+            this.lb_FcText.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lb_FcText.Font = new System.Drawing.Font("Times New Roman", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lb_FcText.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(153)))), ((int)(((byte)(153)))));
+            this.lb_FcText.Location = new System.Drawing.Point(0, 0);
+            this.lb_FcText.Name = "lb_FcText";
+            this.lb_FcText.Size = new System.Drawing.Size(135, 23);
+            this.lb_FcText.Style = Sunny.UI.UIStyle.Custom;
+            this.lb_FcText.TabIndex = 0;
+            this.lb_FcText.Text = "飞控状态：";
+            this.lb_FcText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // uiPanel7
             // 
@@ -4285,8 +4431,8 @@ namespace UCM_Tools.Forms
             this.menuItem_VideoPreview,
             this.ts_TrackData,
             this.ts_RadarFunction,
-            this.ts_GpsInfoData,
-            this.ts_FilterTrackIds});
+            this.ts_FilterTrackIds,
+            this.ts_ShowInfo});
             this.uiContextMenuStrip1.Name = "uiContextMenuStrip1";
             this.uiContextMenuStrip1.ShowImageMargin = false;
             this.uiContextMenuStrip1.Size = new System.Drawing.Size(135, 136);
@@ -4353,14 +4499,6 @@ namespace UCM_Tools.Forms
             this.ts_RadarUpgrade_UCM211.Text = "雷达升级(UCM211)";
             this.ts_RadarUpgrade_UCM211.Click += new System.EventHandler(this.ts_RadarUpgrade_UCM211_Click);
             // 
-            // ts_GpsInfoData
-            // 
-            this.ts_GpsInfoData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
-            this.ts_GpsInfoData.Name = "ts_GpsInfoData";
-            this.ts_GpsInfoData.Size = new System.Drawing.Size(134, 22);
-            this.ts_GpsInfoData.Text = "GPS信息";
-            this.ts_GpsInfoData.Click += new System.EventHandler(this.ts_GpsInfoData_Click);
-            // 
             // ts_FilterTrackIds
             // 
             this.ts_FilterTrackIds.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
@@ -4368,6 +4506,34 @@ namespace UCM_Tools.Forms
             this.ts_FilterTrackIds.Size = new System.Drawing.Size(134, 22);
             this.ts_FilterTrackIds.Text = "过滤目标";
             this.ts_FilterTrackIds.Click += new System.EventHandler(this.ts_FilterTrackIds_Click);
+            // 
+            // ts_ShowInfo
+            // 
+            this.ts_ShowInfo.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.ts_GpsInfoData,
+            this.ts_FcInfoData});
+            this.ts_ShowInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.ts_ShowInfo.Name = "ts_ShowInfo";
+            this.ts_ShowInfo.Size = new System.Drawing.Size(134, 22);
+            this.ts_ShowInfo.Text = "信息查看";
+            // 
+            // ts_GpsInfoData
+            // 
+            this.ts_GpsInfoData.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
+            this.ts_GpsInfoData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.ts_GpsInfoData.Name = "ts_GpsInfoData";
+            this.ts_GpsInfoData.Size = new System.Drawing.Size(180, 22);
+            this.ts_GpsInfoData.Text = "GPS信息";
+            this.ts_GpsInfoData.Click += new System.EventHandler(this.ts_GpsInfoData_Click);
+            // 
+            // ts_FcInfoData
+            // 
+            this.ts_FcInfoData.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(10)))), ((int)(((byte)(10)))), ((int)(((byte)(10)))));
+            this.ts_FcInfoData.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(255)))), ((int)(((byte)(100)))), ((int)(((byte)(100)))));
+            this.ts_FcInfoData.Name = "ts_FcInfoData";
+            this.ts_FcInfoData.Size = new System.Drawing.Size(180, 22);
+            this.ts_FcInfoData.Text = "飞控信息";
+            this.ts_FcInfoData.Click += new System.EventHandler(this.ts_FcInfoData_Click);
             // 
             // MainForm
             // 
@@ -4410,6 +4576,9 @@ namespace UCM_Tools.Forms
             this.uiPanel13.ResumeLayout(false);
             this.uiPanel15.ResumeLayout(false);
             this.uiPanel4.ResumeLayout(false);
+            this.uiPanel16.ResumeLayout(false);
+            this.uiPanel97.ResumeLayout(false);
+            this.uiPanel99.ResumeLayout(false);
             this.uiPanel7.ResumeLayout(false);
             this.uiPanel9.ResumeLayout(false);
             this.uiPanel11.ResumeLayout(false);
@@ -4663,7 +4832,15 @@ namespace UCM_Tools.Forms
         private UIPanel uiPanel10;
         private UIPanel uiPanel11;
         private UILabel lb_GpsText;
-        private ToolStripMenuItem ts_GpsInfoData;
         private ToolStripMenuItem ts_FilterTrackIds;
+        private UIPanel uiPanel16;
+        private UIPanel uiPanel97;
+        private UILabel lb_Fc;
+        private UIPanel uiPanel98;
+        private UIPanel uiPanel99;
+        private UILabel lb_FcText;
+        private ToolStripMenuItem ts_ShowInfo;
+        private ToolStripMenuItem ts_GpsInfoData;
+        private ToolStripMenuItem ts_FcInfoData;
     }
 }

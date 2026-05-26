@@ -205,6 +205,8 @@
 			<Control name="XY2DView" text="XYView" />
 			<Control name="GpsState" text="Gps State" />
 			<Control name="ts_Theme" text="Themes" />
+			<Control name="InfoView" text="Information View" />
+			<Control name="FcState" text="FC State" />
 		</Controls>
 	</Form>
 
@@ -272,6 +274,29 @@
 			<Control name="Altitude" text="Altitude" />
 			<Control name="Velocity" text="Velocity" />
 			<Control name="Declination" text="Declination" />
+		</Controls>
+	</Form>
+	<Form>
+		<!--飞控信息-->
+		<Name>FCInfoForm</Name>
+		<Controls>
+			<Control name="FCInfoTitle" text="FC Infomation" />
+			<Control name="FCInfo" text="FC Info Area" />
+			<Control name="GPSLocValid" text="GPS-Loc" />
+			<Control name="UAVAttitude" text="UAV Attitude" />
+			<Control name="Longitude" text="Longitude" />
+			<Control name="Latitude" text="Latitude" />
+			<Control name="Altitude" text="Altitude" />
+			<Control name="AGL" text="AGL" />
+			<Control name="VN" text="VN" />
+			<Control name="VE" text="VE" />
+			<Control name="VD" text="VD" />
+			<Control name="RollAngle" text="Roll Angle" />
+			<Control name="PitchAngle" text="Pitch Angle" />
+			<Control name="YawAngle" text="Yaw Angle" />
+			<Control name="RollSpeed" text="Roll Speed" />
+			<Control name="PitchSpeed" text="Pitch Speed" />
+			<Control name="YawSpeed" text="Yaw Speed" />
 		</Controls>
 	</Form>
 	<Form>

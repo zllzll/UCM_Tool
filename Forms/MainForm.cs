@@ -43,11 +43,13 @@ namespace UCM_Tools.Forms
         VideoPreviewForm videoPreviewForm = null;
         TrackNplotForm trackNplotForm = null;
         GPSInfoForm gpsInfoForm = null;
+        FCInfoForm fcInfoForm = null;
         TrackFilterForm trackFilterForm = null;
         string periodstring = "*******************  xyz_data **************************";
         string periodstringPointTrack = "*******************  point_track_data **************************";
         string saveDataClusterAlogHead = "frame_id,range,azimuth,elevation,velocity,snr,v_ego_x,v_ego_y,v_ego_z";
-        string saveDataImuAndGpsHead = "time,AccX1,AccY1,AccZ1,AVX1,AVY1,AVZ1,AccX2,AccY2,AccZ2,AVX2,AVY2,AVZ2,GpsLong,GpsLat,GpsHeight,GpsSpeed,GpsDecl";
+        string saveDataImuAndGpsHead = "time,isValid,AccX1,AccY1,AccZ1,AVX1,AVY1,AVZ1,AccX2,AccY2,AccZ2,AVX2,AVY2,AVZ2,GpsLong,GpsLat,GpsHeight,GpsSpeed,GpsDecl";
+        string saveDataFcHead = "time,GpsLoc,UavAttitude,GpsLong,GpsLat,GpsHeight,AGL,VN,VE,VD,Roll,Pitch,Yaw,RollSpeed,PitchSpeed,YawSpeed";
         #region 全局变量
 
         #region 画图控件
@@ -133,6 +135,7 @@ namespace UCM_Tools.Forms
         QueueSaveData saveDataPointTrack = null;
         QueueSaveData saveDataClusterAlog = null;
         QueueSaveData saveDataImuAndGps = null;
+        QueueSaveData saveDataFC = null;
         /// <summary>
         /// 累计多少帧显示
         /// </summary>
@@ -146,8 +149,13 @@ namespace UCM_Tools.Forms
 
         public static event TrackDataDelegate trackDataReceived;
         public delegate void GpsInfoDataDelegate(IMUAndGPSData data);
-
         public static event GpsInfoDataDelegate gpsInfoDataReceived;
+
+        public delegate void FcInfoDataDelegate(FCData data);
+        public static event FcInfoDataDelegate fcInfoDataReceived;
+
+        public delegate void ConnInfoDataDelegate(ConnState dataConn);
+        public static event ConnInfoDataDelegate connInfoDataReceived;
         #endregion 全局变量
 
         #region 初始化
@@ -223,6 +231,10 @@ namespace UCM_Tools.Forms
                     {
                         SunnyUIHelper.SetTheme(gpsInfoForm, tsItem.Text);
                     }
+                    if (fcInfoForm != null)
+                    {
+                        SunnyUIHelper.SetTheme(fcInfoForm, tsItem.Text);
+                    }
                     if (trackFilterForm != null)
                     {
                         SunnyUIHelper.SetTheme(trackFilterForm, tsItem.Text);
@@ -278,8 +290,11 @@ namespace UCM_Tools.Forms
                 ts_RadarFunction.Text = MultiLanguage.LanguageText("MainForm", "ts_RadarFunc");
                 menuItem_VideoPreview.Text = MultiLanguage.LanguageText("MainForm", "VideoPreview");
                 ts_TrackData.Text = MultiLanguage.LanguageText("MainForm", "XY2DView");
+                ts_ShowInfo.Text = MultiLanguage.LanguageText("MainForm", "InfoView");
                 lb_GpsText.Text = MultiLanguage.LanguageText("MainForm", "GpsState");
                 ts_GpsInfoData.Text = MultiLanguage.LanguageText("GPSInfoForm", "GPSInfoTitle");
+                lb_FcText.Text = MultiLanguage.LanguageText("MainForm", "FcState");
+                ts_FcInfoData.Text = MultiLanguage.LanguageText("FCInfoForm", "FCInfoTitle");
                 ts_FilterTrackIds.Text = MultiLanguage.LanguageText("TrackFilterForm", "FilterIdTitle");
             }
             catch (Exception ex) { Log.Error($"MainForm LoadLanguage() Ex\r\n{ex.ToString()}"); }
@@ -824,6 +839,7 @@ namespace UCM_Tools.Forms
             lb_TrackNum.Text = "0";
             lb_Version.Text = "v0.0.0";
             lb_Gps.Text = "Invalid";
+            lb_Fc.Text = "Invalid";
         }
 
         private async Task<bool> Start()
@@ -839,6 +855,7 @@ namespace UCM_Tools.Forms
                 radar.tarAndClusterPointCloud += Radar_tarAndClusterPointCloud;
                 radar.pointCloudSaveEvent += Radar_pointCloudSaveEvent;
                 radar.imuAndGpsSaveEvent += Radar_imuAndGpsSaveEvent;
+                radar.fcSaveEvent += Radar_FcSaveEvent;
                 radar.connectStatusChangedEvent += Radar_connectStatusChangedEvent;
                 radar.SendCmd(RadarCommand.ReadSoftwareVersion);
                 return true;
@@ -862,6 +879,8 @@ namespace UCM_Tools.Forms
         private void Radar_connectStatusChangedEvent(bool isConnected, ConnState connState)
         {
             string message = MultiLanguage.LanguageText("ErrorInfo", connState.ToString());
+            if (connInfoDataReceived != null)
+                connInfoDataReceived(connState);
             this.Invoke((Action)(() =>
             {
                 if (isConnected)
@@ -2510,12 +2529,12 @@ namespace UCM_Tools.Forms
                         if ((saveDataImuAndGps = new QueueSaveData($"{SystemSetting.FileRoute}//ImuAndGpsFormat", 0, "csv", SystemSetting.FileSize, "ImuAndGpsFormat")) != null)
                         {
                             saveDataImuAndGps.AddQueue($"{saveDataImuAndGpsHead}\r\n");
-                            saveDataImuAndGps.AddQueue(ImuAndGpsToString(time, imuAndGpsData));
+                            saveDataImuAndGps.AddQueue(ImuAndGpsToString(time, imuAndGpsData, gpsState));
                         }
                     }
                 }
                 else
-                    saveDataImuAndGps.AddQueue(ImuAndGpsToString(time, imuAndGpsData));
+                    saveDataImuAndGps.AddQueue(ImuAndGpsToString(time, imuAndGpsData, gpsState));
             }
             else//以防测试过程中修改了保存设置
             {
@@ -2524,12 +2543,53 @@ namespace UCM_Tools.Forms
             }
         }
 
-        private string ImuAndGpsToString(string time, IMUAndGPSData imuAndGpsData)
+        private string ImuAndGpsToString(string time, IMUAndGPSData imuAndGpsData,string isValid)
         {
             StringBuilder sb = new StringBuilder();
             if (imuAndGpsData != null)
             {
-                sb.AppendLine($"{time},{imuAndGpsData.AccX1},{imuAndGpsData.AccY1},{imuAndGpsData.AccZ1},{imuAndGpsData.AVX1},{imuAndGpsData.AVY1},{imuAndGpsData.AVZ1},{imuAndGpsData.AccX2},{imuAndGpsData.AccY2},{imuAndGpsData.AccZ2},{imuAndGpsData.AVX2},{imuAndGpsData.AVY2},{imuAndGpsData.AVZ2},{imuAndGpsData.GpsLong},{imuAndGpsData.GpsLat},{imuAndGpsData.GpsHeight},{imuAndGpsData.GpsSpeed},{imuAndGpsData.GpsDeclination}");
+                sb.AppendLine($"{time},{isValid},{imuAndGpsData.AccX1},{imuAndGpsData.AccY1},{imuAndGpsData.AccZ1},{imuAndGpsData.AVX1},{imuAndGpsData.AVY1},{imuAndGpsData.AVZ1},{imuAndGpsData.AccX2},{imuAndGpsData.AccY2},{imuAndGpsData.AccZ2},{imuAndGpsData.AVX2},{imuAndGpsData.AVY2},{imuAndGpsData.AVZ2},{imuAndGpsData.GpsLong},{imuAndGpsData.GpsLat},{imuAndGpsData.GpsHeight},{imuAndGpsData.GpsSpeed},{imuAndGpsData.GpsDeclination}");
+            }
+            return sb.ToString();
+        }
+        #endregion
+
+        #region 飞控数据保存
+        private void Radar_FcSaveEvent(string time, FCData fcData)
+        {
+            string fcState = fcData != null && (fcData.GpsLocValid || fcData.UavAttitudeValid) ? "Valid" : "Invalid";
+            if (fcInfoDataReceived != null)
+                fcInfoDataReceived(fcData);
+            this.BeginInvoke((EventHandler)delegate { lb_Fc.Text = fcState; });
+            if (SystemSetting.TargetData)
+            {
+                if (saveDataFC == null)
+                {
+                    if (PubClass.EnsureFolderPath($"{SystemSetting.FileRoute}//FCFormat"))
+                    {
+                        if ((saveDataFC = new QueueSaveData($"{SystemSetting.FileRoute}//FCFormat", 0, "csv", SystemSetting.FileSize, "FCFormat")) != null)
+                        {
+                            saveDataFC.AddQueue($"{saveDataFcHead}\r\n");
+                            saveDataFC.AddQueue(FCToString(time, fcData));
+                        }
+                    }
+                }
+                else
+                    saveDataFC.AddQueue(FCToString(time, fcData));
+            }
+            else//以防测试过程中修改了保存设置
+            {
+                saveDataFC?.Dispose();
+                saveDataFC = null;
+            }
+        }
+
+        private string FCToString(string time, FCData fcData)
+        {
+            StringBuilder sb = new StringBuilder();
+            if (fcData != null)
+            {
+                sb.AppendLine($"{time},{fcData.GpsLocValid},{fcData.UavAttitudeValid},{fcData.GpsLong},{fcData.GpsLat},{fcData.GpsHeight},{fcData.AGL},{fcData.VN},{fcData.VE},{fcData.VD},{fcData.RollAngle},{fcData.PitchAngle},{fcData.YawAngle},{fcData.RollSpeed},{fcData.PitchSpeed},{fcData.YawSpeed}");
             }
             return sb.ToString();
         }
@@ -2548,6 +2608,7 @@ namespace UCM_Tools.Forms
                     radar.tarAndClusterPointCloud -= Radar_tarAndClusterPointCloud;
                     radar.pointCloudSaveEvent -= Radar_pointCloudSaveEvent;
                     radar.imuAndGpsSaveEvent -= Radar_imuAndGpsSaveEvent;
+                    radar.fcSaveEvent -= Radar_FcSaveEvent;
                     radar.connectStatusChangedEvent -= Radar_connectStatusChangedEvent;
                     radar.Stop();
                 }
@@ -2560,12 +2621,14 @@ namespace UCM_Tools.Forms
                     saveDataPointTrack?.Dispose();
                     saveDataClusterAlog?.Dispose();
                     saveDataImuAndGps?.Dispose();
+                    saveDataFC?.Dispose();
                 }
                 saveData = null;
                 saveDataTrack = null;
                 saveDataPointTrack = null;
                 saveDataClusterAlog = null;
                 saveDataImuAndGps = null;
+                saveDataFC = null;
                 // 2. 关键：使用Invoke等待所有待处理的渲染完成后再清理
                 this.Invoke(new Action(() =>
                 {
@@ -2911,6 +2974,21 @@ namespace UCM_Tools.Forms
             gpsInfoForm.Show();
         }
         #endregion GPS信息
+
+        #region 飞控信息
+        private void ts_FcInfoData_Click(object sender, EventArgs e)
+        {
+            if (fcInfoForm != null && !fcInfoForm.IsDisposed)
+            {
+                if (fcInfoForm.WindowState == FormWindowState.Minimized)
+                    fcInfoForm.WindowState = FormWindowState.Normal;
+                fcInfoForm.Focus();
+                return;
+            }
+            fcInfoForm = new FCInfoForm();
+            fcInfoForm.Show();
+        }
+        #endregion 飞控信息
 
         #region 跟踪目标过滤
         private void ts_FilterTrackIds_Click(object sender, EventArgs e)

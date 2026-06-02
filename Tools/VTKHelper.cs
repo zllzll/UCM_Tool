@@ -442,7 +442,7 @@ namespace UCM_Tools.Tools
 			text.Append(SystemSetting.Tar_ID ? $"ID={tar.ID}" : "");
 			text.Append(SystemSetting.Tar_X ? $" X={tar.XAxis:F2}" : "");
 			text.Append(SystemSetting.Tar_Y ? $" Y={tar.YAxis:F2}" : "");
-			text.Append(SystemSetting.Tar_Z ? $" Z={tar.YAxis:F2}" : "");
+			text.Append(SystemSetting.Tar_Z ? $" Z={tar.ZAxis:F2}" : "");
 			text.Append(SystemSetting.Tar_V ? $" V={tar.Velocity:F2}" : "");
 			text.Append(SystemSetting.Tar_A ? $" A={tar.PAngle:F2}" : "");
 			text.Append(SystemSetting.Tar_C ? $" C={tar.Confidence}" : "");
